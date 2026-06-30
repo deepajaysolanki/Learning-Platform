@@ -2,8 +2,13 @@ var express = require('express');
 var router = express.Router();
 const workspaceModel = require('../models/workspace');
 const multer = require('multer');
-const upload = multer({ storage: multer.memoryStorage() });
+const { GoogleGenAI } = require('@google/genai');
+require('dotenv').config();
 
+const upload = multer({ storage: multer.memoryStorage() });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+// -------------------------------------
 router.get('/', function (req, res, next) {
   res.send('Welcome to the Workspace API');
 });
@@ -61,4 +66,46 @@ router.post('/api/workspaces', async function (req, res, next) {
   ;
 });
 
+// 
+router.post('/api/workspaces/:id/ask', async function (req, res, ) {
+  try{
+    const workspaceId = req.params.id;
+    const userQuestion = req.body.question;
+
+    // find the workspace in database
+    const workspace = await workspaceModel.findById(workspaceId);
+    if (!workspace|| workspace.sources.length === 0) {
+      return res.status(404).json({ message: 'Workspace not found or has no sources' });
+    }
+
+    // grab the raw text from the sources in the workspace
+    const documentText = workspace.sources[0].rawText;
+  
+    // craft the prompt for the AI model
+    const prompt = `
+      You are a helpful study assistant. 
+      Base your answer ONLY on the following source text provided by the user. 
+      If the answer cannot be found in the text, say "I cannot find that in the provided document."
+      
+      Source Text:
+      ${documentText}
+      
+      User Question: ${userQuestion}
+    `;
+    
+    // send the prompt to the AI model
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+
+    // return the AI's answer to the user
+    res.status(200).json({ 
+      answer: response.text 
+    });
+
+  }catch(err){
+    res.status(500).json({ message: 'Error processing request', error: err.message })
+  }
+})
 module.exports = router;
