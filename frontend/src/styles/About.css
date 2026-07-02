@@ -1,0 +1,339 @@
+/* ==========================================================================
+   1. LAYOUT RESET & HERO
+   ========================================================================== */
+.about-page-wrapper {
+  background-color: #fcfdfe;
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
+
+.about-page-wrapper > section {
+  padding: 120px 24px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.about-hero {
+  text-align: center;
+  background: radial-gradient(circle at 50% 10%, rgba(26, 115, 232, 0.04) 0%, transparent 60%);
+}
+
+.about-hero-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.about-tag {
+  background: #e8f0fe;
+  color: #1a73e8;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  display: inline-block;
+  margin-bottom: 24px;
+}
+
+.about-title {
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -1.5px;
+  color: #0f172a;
+  margin-bottom: 24px;
+}
+
+.gradient-text {
+  color: #1a73e8;
+  background: linear-gradient(90deg, #1a73e8, #00c6ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.about-subtitle {
+  font-size: 18px;
+  line-height: 1.6;
+  color: #475569;
+}
+
+/* ==========================================================================
+   2. MISSION SPLIT PANELS
+   ========================================================================== */
+.mission-section {
+  background-color: #ffffff;
+  border-top: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+  max-width: 100% !important;
+}
+
+.mission-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  gap: 64px;
+}
+
+.mission-left-pane {
+  flex: 1;
+  position: sticky;
+  top: 140px;
+  height: max-content;
+}
+
+.section-label {
+  color: #10b981;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.mission-left-pane h2 {
+  font-size: 36px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.25;
+  letter-spacing: -0.5px;
+  margin-bottom: 24px;
+}
+
+.mission-left-pane p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #64748b;
+  margin-bottom: 16px;
+}
+
+.mission-grid {
+  flex: 1.2;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.pillar-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.01);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.pillar-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
+}
+
+.pillar-icon-box {
+  background: #f8fafc;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-bottom: 16px;
+}
+
+.pillar-card h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.pillar-card p {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #64748b;
+}
+
+/* ==========================================================================
+   3. FOUNDER/TEAM SECTION
+   ========================================================================== */
+.team-container {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.section-label-center {
+  color: #1a73e8;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.team-section-title {
+  font-size: 36px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 48px;
+}
+
+.founder-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  padding: 32px;
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  text-align: left;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.01);
+}
+
+.founder-avatar {
+  background: linear-gradient(135deg, #e0f2fe 0%, #ffedf5 100%);
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.founder-info {
+  flex-grow: 1;
+}
+
+.founder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.founder-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.founder-role {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1a73e8;
+  background: rgba(26, 115, 232, 0.08);
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.founder-info p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #475569;
+}
+
+/* ==========================================================================
+   4. ABOUT CTA SECTION
+   ========================================================================== */
+.about-cta-section {
+  text-align: center;
+}
+
+.about-cta-container {
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.cta-glow-effect {
+  position: absolute;
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(26, 115, 232, 0.05) 0%, transparent 70%);
+  z-index: 1; pointer-events: none;
+}
+
+.about-cta-container h2 {
+  font-size: 38px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 12px;
+  position: relative; z-index: 2;
+}
+
+.about-cta-container p {
+  font-size: 15px;
+  color: #64748b;
+  margin-bottom: 32px;
+  position: relative; z-index: 2;
+}
+
+.about-cta-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  position: relative; z-index: 2;
+}
+
+.btn-about-primary {
+  background: #1a73e8;
+  color: white;
+  padding: 14px 28px;
+  border-radius: 24px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none; cursor: pointer;
+}
+
+.btn-about-secondary {
+  background: white;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  padding: 14px 28px;
+  border-radius: 24px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   5. RESPONSIVE BREAKPOINTS MATRIX
+   ========================================================================== */
+@media (max-width: 992px) {
+  .about-page-wrapper > section { padding: 80px 24px; }
+  .about-title { font-size: 42px; }
+  
+  .mission-container {
+    flex-direction: column;
+    gap: 48px;
+  }
+  
+  .mission-left-pane { position: relative; top: 0; }
+}
+
+@media (max-width: 640px) {
+  .about-page-wrapper > section { padding: 60px 16px; }
+  .about-title { font-size: 32px; }
+  
+  .mission-grid { grid-template-columns: 1fr; }
+  
+  .founder-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 24px;
+  }
+  
+  .founder-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    margin-top: 12px;
+  }
+  
+  .about-cta-actions { flex-direction: column; width: 100%; }
+  .btn-about-primary, .btn-about-secondary { width: 100%; text-align: center; }
+}

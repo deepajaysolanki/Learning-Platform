@@ -1,8 +1,20 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import './Navbar.css';
+import { Link, useNavigate } from 'react-router-dom';
+import '../styles/Navbar.css';
 
-export default function Navbar() {
+const Navbar = () => {
+  const navigate = useNavigate();
+
+  // Check if the user is logged in right now
+  const token = localStorage.getItem("studyAppToken");
+  console.log("Token from localStorage:", token); // Debugging line
+  
+  // The Logout Function
+  const handleLogout = () => {
+    localStorage.removeItem("studyAppToken"); // Throw away the token
+    window.location.href = "/";
+  };
+
   return (
     <nav className="navbar">
       <div className="nav-container">
@@ -23,10 +35,20 @@ export default function Navbar() {
         </ul>
         
         <div className="nav-actions">
-          <Link to="/signin" className="btn-signin">Sign in</Link>
-          <button className="btn-primary-nav">Try for free</button>
+          {token ? (
+            <>
+              <button onClick={handleLogout} className="btn-logout">Logout</button>
+            </>
+          ) : (
+            <>
+              <Link to="/api/auth/login" className="btn-signin">Sign in</Link>
+              <Link to="/api/auth/register" className="btn-primary-nav">Try for free</Link>
+            </>
+          )}
         </div>
       </div>
     </nav>
   );
 }
+
+export default Navbar;

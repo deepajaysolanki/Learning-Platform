@@ -4,13 +4,64 @@ const workspaceModel = require('../models/workspace');
 const multer = require('multer');
 const { GoogleGenAI } = require('@google/genai');
 require('dotenv').config();
-
+const User = require('../models/Users');
+const bcrypt = require('bcrypt');
 const upload = multer({ storage: multer.memoryStorage() });
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // -------------------------------------
 router.get('/', function (req, res, next) {
   res.send('Welcome to the Workspace API');
+});
+
+// route for registration
+router.post('/api/auth/register', async function (req, res) {
+  try {
+    const { username, email, password } = req.body;
+
+    // Check if the user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    // Secure the password before saving!
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Create a new user
+    const newUser = await User.create({ username, email, password: hashedPassword });
+    res.status(201).json({ message: 'User created successfully', user: newUser });
+  } catch (err) {
+    return res.status(500).json({ message: `Error creating user error: ${err.message}` });
+  }
+});
+
+// route for login
+router.post('/api/auth/login', async function (req, res) {
+  try {
+    const { name, password } = req.body;
+
+    // Find the user by email or username
+    const user = await User.findOne({
+      $or: [
+        { email: name },
+        { username: name }
+      ]
+    });
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+
+    // Compare the provided password with the hashed password in the database
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
+    res.status(200).json({ message: 'Login successful', user });
+  } catch (err) {
+    return res.status(500).json({ message: `Error logging in: ${err.message}` });
+  }
 });
 
 // route to upload a file to a specific workspace
@@ -67,20 +118,20 @@ router.post('/api/workspaces', async function (req, res, next) {
 });
 
 // 
-router.post('/api/workspaces/:id/ask', async function (req, res, ) {
-  try{
+router.post('/api/workspaces/:id/ask', async function (req, res,) {
+  try {
     const workspaceId = req.params.id;
     const userQuestion = req.body.question;
 
     // find the workspace in database
     const workspace = await workspaceModel.findById(workspaceId);
-    if (!workspace|| workspace.sources.length === 0) {
+    if (!workspace || workspace.sources.length === 0) {
       return res.status(404).json({ message: 'Workspace not found or has no sources' });
     }
 
     // grab the raw text from the sources in the workspace
     const documentText = workspace.sources[0].rawText;
-  
+
     // craft the prompt for the AI model
     const prompt = `
       You are a helpful study assistant. 
@@ -92,7 +143,7 @@ router.post('/api/workspaces/:id/ask', async function (req, res, ) {
       
       User Question: ${userQuestion}
     `;
-    
+
     // send the prompt to the AI model
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -100,11 +151,11 @@ router.post('/api/workspaces/:id/ask', async function (req, res, ) {
     });
 
     // return the AI's answer to the user
-    res.status(200).json({ 
-      answer: response.text 
+    res.status(200).json({
+      answer: response.text
     });
 
-  }catch(err){
+  } catch (err) {
     res.status(500).json({ message: 'Error processing request', error: err.message })
   }
 })
