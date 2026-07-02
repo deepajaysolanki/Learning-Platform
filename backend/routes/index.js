@@ -8,6 +8,8 @@ const User = require('../models/Users');
 const bcrypt = require('bcrypt');
 const upload = multer({ storage: multer.memoryStorage() });
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
 
 // -------------------------------------
 router.get('/', function (req, res, next) {
@@ -15,14 +17,20 @@ router.get('/', function (req, res, next) {
 });
 
 // route for registration
-router.post('/api/auth/register', async function (req, res) {
+router.post('/register', async function (req, res) {
   try {
     const { username, email, password } = req.body;
 
     // Check if the user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+    const existingUserEmail = await User.findOne({ "email": email });
+
+    if (existingUserEmail) {
+      return res.status(400).json({ message: 'User with this email already exists' });
+    }
+
+    const existingUserName = await User.findOne({ "username": username });
+    if (existingUserName) {
+      return res.status(400).json({ message: 'User with this username already exists' });
     }
 
     // Secure the password before saving!
@@ -38,7 +46,7 @@ router.post('/api/auth/register', async function (req, res) {
 });
 
 // route for login
-router.post('/api/auth/login', async function (req, res) {
+router.post('login', async function (req, res) {
   try {
     const { name, password } = req.body;
 
@@ -61,6 +69,68 @@ router.post('/api/auth/login', async function (req, res) {
     res.status(200).json({ message: 'Login successful', user });
   } catch (err) {
     return res.status(500).json({ message: `Error logging in: ${err.message}` });
+  }
+});
+
+// route for google authentication
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// ROUTE 1: The Initial Google Login / Fork in the Road
+router.post('/google', async function (req, res) {
+  try {
+    const { credential } = req.body;
+
+    // 1. Verify the token with Google's servers
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const { email } = payload;
+
+    // 2. Check if user already exists
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // ➔ PATH A: User exists! Log them in and give them a token.
+      const token = jwt.sign({ id: user._id }, process.env.GOOGLE_CLIENT_SECRET, { expiresIn: '1h' });
+      return res.status(200).json({ message: 'Login successful', token });
+    } else {
+      // ➔ PATH B: New user! Send them back to React to pick a username.
+      return res.status(200).json({
+        requireUsername: true,
+        email: email
+      });
+    }
+  } catch (err) {
+    res.status(500).json({ message: 'Google Auth Failed', error: err.message });
+  }
+})
+
+// ROUTE 2: Complete the Google Registration
+router.post('/google/complete', async (req, res) => {
+  try {
+    const { email, username } = req.body;
+
+    // Check if the username they picked is already taken by someone else
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Username is already taken' });
+    }
+
+    // Save the new Google user to the database
+    const newUser = await User.create({ 
+      email, 
+      username, 
+      authProvider: 'google' 
+    });
+
+    //  Issue their VIP wristband
+    const token = jwt.sign({ id: newUser._id }, process.env.GOOGLE_CLIENT_SECRET, { expiresIn: '1h' });
+    res.status(201).json({ message: 'Account created successfully', token });
+
+  } catch (err) {
+    res.status(500).json({ message: 'Error creating account', error: err.message });
   }
 });
 
@@ -98,7 +168,7 @@ router.post('/:id/upload', async function (req, res, next) {
 });
 
 // route to create a new workspace
-router.post('/api/workspaces', async function (req, res, next) {
+router.post('/workspaces', async function (req, res, next) {
   try {
     const workspace = await workspaceModel.create({
       name: req.body.name,
@@ -117,8 +187,7 @@ router.post('/api/workspaces', async function (req, res, next) {
   ;
 });
 
-// 
-router.post('/api/workspaces/:id/ask', async function (req, res,) {
+router.post('/workspaces/:id/ask', async function (req, res,) {
   try {
     const workspaceId = req.params.id;
     const userQuestion = req.body.question;

@@ -69,7 +69,7 @@ function App() {
     setAnswer(''); 
 
     try {
-      const response = await fetch(`http://localhost:3000/api/workspaces/${workspaceId}/ask`, {
+      const response = await fetch(`http://localhost:3000/workspaces/${workspaceId}/ask`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

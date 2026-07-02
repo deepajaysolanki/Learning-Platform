@@ -526,13 +526,14 @@ export default function Home() {
         {/* SECTION 4: PUBLIC NOTEBOOKS SLIDER */}
         <section className="community-marquee-section" ref={communityRef}>
           <div className="community-marquee-header">
-            <div>
+            <div className="section-title-wrap">
               <span className="premium-tag">PUBLIC NOTEBOOKS</span>
               <h2>Learn from the community</h2>
             </div>
+          </div>
+          <div className="community-marquee-subtitle">
             <button className="browse-all-btn">Browse all notebooks →</button>
           </div>
-
           <div className="marquee-viewport">
             <div className="marquee-inner" ref={marqueeInnerRef}>
               {[...notebooks, ...notebooks].map((nb, index) => (

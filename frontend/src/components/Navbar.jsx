@@ -8,7 +8,7 @@ const Navbar = () => {
   // Check if the user is logged in right now
   const token = localStorage.getItem("studyAppToken");
   console.log("Token from localStorage:", token); // Debugging line
-  
+
   // The Logout Function
   const handleLogout = () => {
     localStorage.removeItem("studyAppToken"); // Throw away the token
@@ -37,12 +37,12 @@ const Navbar = () => {
         <div className="nav-actions">
           {token ? (
             <>
-              <button onClick={handleLogout} className="btn-logout">Logout</button>
+              <button onClick={handleLogout} className="btn-primary-nav">Logout</button>
             </>
           ) : (
             <>
-              <Link to="/api/auth/login" className="btn-signin">Sign in</Link>
-              <Link to="/api/auth/register" className="btn-primary-nav">Try for free</Link>
+              <Link to="/login" className="btn-signin">Sign in</Link>
+              <Link to="/register" className="btn-primary-nav">Try for free</Link>
             </>
           )}
         </div>

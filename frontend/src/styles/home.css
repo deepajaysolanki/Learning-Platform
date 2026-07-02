@@ -526,6 +526,10 @@
   background: white;
   cursor: pointer;
 }
+.community-marquee-subtitle{
+  display: flex;
+  justify-content: flex-end;
+}
 
 .marquee-viewport {
   width: 100%;

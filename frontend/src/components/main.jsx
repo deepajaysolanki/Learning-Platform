@@ -11,6 +11,7 @@ import Notebooks from "../components/Notebooks.jsx";
 import Registration from "./Registration.jsx";
 import Login from "./Login.jsx";
 import { HelmetProvider } from "react-helmet-async";
+import { GoogleOAuthProvider } from '@react-oauth/google'
 
 function MainApp() {
   return (
@@ -20,19 +21,21 @@ function MainApp() {
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/notebooks" element={<Notebooks />} />
-        <Route path="/api/auth/register" element={<Registration />} />
-        <Route path="/api/auth/login" element={<Login />} />
+        <Route path="/register" element={<Registration />} />
+        <Route path="/login" element={<Login />} />
       </Routes>
       <Footer />
     </>
   );
 }
-
+console.log("GOOGLE_CLIENT_ID from env:", import.meta.env.VITE_GOOGLE_CLIENT_ID); // Debugging line
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <HelmetProvider>
       <BrowserRouter>
-        <MainApp />
+        <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+          <MainApp />
+        </GoogleOAuthProvider>
       </BrowserRouter>
     </HelmetProvider>
   </StrictMode>,

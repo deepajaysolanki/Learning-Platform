@@ -18,11 +18,11 @@ const userSchema = new mongooose.Schema({
     },
     password: {
         type: String,
-        required: true
+        required: false
     },
-    googleID: {
+    authProvider: {
         type: String,
-        optional: true
+        default: 'local' 
     },
     createdAt: {
         type: Date,

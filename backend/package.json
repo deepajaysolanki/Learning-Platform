@@ -14,6 +14,7 @@
     "dotenv": "^17.4.2",
     "ejs": "~2.6.1",
     "express": "~4.16.1",
+    "google-auth-library": "^10.9.0",
     "http-errors": "~1.6.3",
     "jsonwebtoken": "^9.0.3",
     "moongose": "^1.0.0",
