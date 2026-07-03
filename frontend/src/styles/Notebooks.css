@@ -152,97 +152,177 @@
   font-weight: 500;
 }
 
-/* --- NOTEBOOKS GRID --- */
+/* ==========================================================================
+   RICH NOTEBOOK CARDS (The Exact Match)
+   ========================================================================== */
+
 .notebooks-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 24px;
+  /* Wider minimum to support the rich summary & 2x2 buttons */
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 32px;
 }
 
-.notebook-card {
+.rich-notebook-card {
   background-color: #ffffff;
-  border: 1px solid #e2e8f0;
   border-radius: 20px;
   padding: 24px;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.02);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.04);
+  border: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
+  height: 100%;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
 }
 
-.notebook-card:hover {
+.rich-notebook-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
 }
 
-.card-top {
+/* --- HEADER --- */
+.rnc-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
-.icon-box {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+.rnc-icon-bg {
+  width: 54px;
+  height: 54px;
+  background-color: #eff6ff;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
-.source-badge {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
+.rnc-book-icon {
+  width: 24px;
+  height: 30px;
+  background-color: #3b82f6;
+  border-radius: 2px 4px 4px 2px;
+  border-left: 5px solid #93c5fd;
 }
 
-.subject-text {
-  font-size: 12px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.notebook-title {
-  font-size: 18px;
-  font-weight: 700;
+.rnc-title-group h3 {
+  font-size: 22px;
+  font-weight: 800;
   color: #0f172a;
-  margin-bottom: 16px;
-  line-height: 1.3;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.5px;
 }
 
-.tags-row {
+.rnc-title-group p {
+  font-size: 14px;
+  color: #94a3b8;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* --- COLORED MEDIA TAGS ROW --- */
+.rnc-media-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 24px;
-  flex-grow: 1; /* Pushes the footer down naturally */
 }
 
-.tag-pill {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  color: #64748b;
-  padding: 4px 12px;
-  border-radius: 14px;
+.rm-tag {
+  padding: 4px 10px;
+  border-radius: 6px;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }
 
-/* --- INTERACTIVE CARD FOOTER --- */
+.pdf-tag { background-color: #fef2f2; color: #ef4444; }
+.audio-tag { background-color: #fef9c3; color: #d97706; }
+.doc-tag { background-color: #eff6ff; color: #3b82f6; }
+.image-tag { background-color: #ecfdf5; color: #10b981; }
+.video-tag { background-color: #faf5ff; color: #a855f7; }
+
+/* --- AI SUMMARY BOX --- */
+.rnc-summary-box {
+  background-color: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  flex-grow: 1; /* Allows this text box to push the buttons and footer down cleanly */
+}
+
+.rnc-summary-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.rnc-blue-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #1a73e8;
+  border-radius: 50%;
+}
+
+.rnc-summary-header h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a73e8;
+  margin: 0;
+}
+
+.rnc-summary-box p {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #475569;
+  margin: 0;
+}
+
+/* --- ACTION BUTTONS 2x2 GRID --- */
+.rnc-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.rnc-action-btn {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.rnc-action-btn:hover {
+  border-color: #cbd5e1;
+  color: #0f172a;
+  background-color: #f8fafc;
+}
+
+/* --- FOOTER & INTERACTIONS --- */
 .card-actions-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid #e2e8f0;
   padding-top: 16px;
-  margin-top: auto;
+  margin-top: auto; 
 }
 
 .interaction-group {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 16px;
 }
 
 .action-icon-btn {
@@ -252,20 +332,17 @@
   background: transparent;
   border: none;
   color: #64748b;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  padding: 6px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  padding: 0;
+  transition: color 0.2s ease;
 }
 
 .action-icon-btn:hover {
   color: #0f172a;
-  background-color: #f8fafc;
 }
 
-/* Specific Heart Interaction */
 .action-icon-btn.like-btn:hover {
   color: #ef4444;
 }
@@ -275,45 +352,24 @@
   stroke: #ef4444;
 }
 
+.like-count {
+  margin-left: 2px;
+}
+
 .creator-username {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: #1a73e8;
-  background: rgba(26, 115, 232, 0.08);
-  padding: 6px 12px;
-  border-radius: 14px;
+  background: #eff6ff;
+  padding: 8px 16px;
+  border-radius: 20px;
   transition: background 0.2s ease;
   cursor: pointer;
 }
 
 .creator-username:hover {
-  background: rgba(26, 115, 232, 0.15);
+  background: #dbeafe;
 }
-
-/* --- THEME COLORS MATCHING FIGMA --- */
-.red { background-color: #fef2f2; color: #ef4444; }
-.red-badge { background-color: #fef2f2; color: #ef4444; }
-.red-text { color: #ef4444; }
-
-.teal { background-color: #f0fdfa; color: #14b8a6; }
-.teal-badge { background-color: #f0fdfa; color: #14b8a6; }
-.teal-text { color: #14b8a6; }
-
-.green { background-color: #f0fdf4; color: #22c55e; }
-.green-badge { background-color: #f0fdf4; color: #22c55e; }
-.green-text { color: #22c55e; }
-
-.blue { background-color: #eff6ff; color: #3b82f6; }
-.blue-badge { background-color: #eff6ff; color: #3b82f6; }
-.blue-text { color: #3b82f6; }
-
-.pink { background-color: #fdf2f8; color: #ec4899; }
-.pink-badge { background-color: #fdf2f8; color: #ec4899; }
-.pink-text { color: #ec4899; }
-
-.purple { background-color: #faf5ff; color: #a855f7; }
-.purple-badge { background-color: #faf5ff; color: #a855f7; }
-.purple-text { color: #a855f7; }
 
 /* --- EMPTY STATE --- */
 .empty-state {
@@ -323,12 +379,6 @@
   justify-content: center;
   padding: 80px 0;
   text-align: center;
-  animation: fadeIn 0.4s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 .empty-icon {
@@ -358,10 +408,6 @@
   
   .search-filter-row {
     flex-direction: column;
-  }
-  
-  .btn-sort {
-    padding: 14px 20px;
   }
   
   .notebooks-grid {
