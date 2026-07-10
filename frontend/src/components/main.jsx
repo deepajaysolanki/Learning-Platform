@@ -10,6 +10,7 @@ import Footer from "../components/Footer.jsx";
 import Notebooks from "../components/Notebooks.jsx";
 import Registration from "./Registration.jsx";
 import Login from "./Login.jsx";
+import MyNotebooks from "../components/MyNotebooks.jsx"
 import { HelmetProvider } from "react-helmet-async";
 import { GoogleOAuthProvider } from '@react-oauth/google'
 
@@ -23,6 +24,7 @@ function MainApp() {
         <Route path="/notebooks" element={<Notebooks />} />
         <Route path="/register" element={<Registration />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/my-notebooks" element={<MyNotebooks />} />
       </Routes>
       <Footer />
     </>

@@ -10,6 +10,8 @@ const upload = multer({ storage: multer.memoryStorage() });
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
+const Notebook = require('../models/Notebook');
+const requireAuth = require('../middleware/auth');
 
 // -------------------------------------
 router.get('/', function (req, res, next) {
@@ -46,15 +48,15 @@ router.post('/register', async function (req, res) {
 });
 
 // route for login
-router.post('login', async function (req, res) {
+router.post('/login', async function (req, res) {
   try {
-    const { name, password } = req.body;
+    const { emailOrUsername, password } = req.body;
 
     // Find the user by email or username
     const user = await User.findOne({
       $or: [
-        { email: name },
-        { username: name }
+        { email: emailOrUsername },
+        { username: emailOrUsername }
       ]
     });
     if (!user) {
@@ -66,7 +68,15 @@ router.post('login', async function (req, res) {
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
-    res.status(200).json({ message: 'Login successful', user });
+
+    // generate the token after we know the password is correct
+    const token = jwt.sign(
+      { id: user._id, username: user.username },
+      process.env.GOOGLE_CLIENT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.status(200).json({ message: 'Login successful', token: token, user: user });
   } catch (err) {
     return res.status(500).json({ message: `Error logging in: ${err.message}` });
   }
@@ -119,10 +129,10 @@ router.post('/google/complete', async (req, res) => {
     }
 
     // Save the new Google user to the database
-    const newUser = await User.create({ 
-      email, 
-      username, 
-      authProvider: 'google' 
+    const newUser = await User.create({
+      email,
+      username,
+      authProvider: 'google'
     });
 
     //  Issue their VIP wristband
@@ -228,4 +238,154 @@ router.post('/workspaces/:id/ask', async function (req, res,) {
     res.status(500).json({ message: 'Error processing request', error: err.message })
   }
 })
+
+// 
+router.post('/createnotebook', requireAuth, upload.array('documents', 10), async (req, res) => {
+  try {
+    // Extract the text fields from the request
+    const { title, isPublic } = req.body;
+    const authorId = req.user.id;
+
+    // Format the uploaded files
+    const processedDocuments = req.files.map(file => {
+      return {
+        fileName: file.originalname,
+        fileUrl: "pending_cloud_url", // Placeholder until you attach cloud storage
+        fileType: file.mimetype.split('/')[1], // e.g., 'pdf' or 'plain'
+        rawText: file.mimetype.includes('text') ? file.buffer.toString('utf-8') : "Binary file data hidden for MVP."
+      };
+    });
+
+    if (processedDocuments.length === 0) {
+      return res.status(400).json({ message: "You must upload at least one document." });
+    }
+
+    // Generate the 2-Line AI Summary
+    // We grab the text from the FIRST document to generate the overview
+    const firstDocText = processedDocuments[0].rawText || "No readable text found in the first document.";
+
+    const summaryPrompt = `
+      You are an expert educational assistant. 
+      Read the following excerpt from a document and write a maximum 2-line, highly concise summary of its core topic. 
+      Do not use filler words like "This document is about". Just state the summary.
+      
+      Document Excerpt:
+      ${firstDocText.substring(0, 3000)} // Limiting characters to save Gemini tokens
+    `;
+
+    const summaryResponse = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: summaryPrompt,
+    });
+
+    const finalSummary = summaryResponse.text;
+
+    // Save everything to MongoDB
+    const newNotebook = await Notebook.create({
+      title,
+      author: authorId,
+      isPublic: isPublic === 'true', // Convert string to boolean
+      aiSummary: finalSummary,
+      documents: processedDocuments
+    });
+
+    // Pull the full author data and format it exactly like the GET route
+    const populatedNotebook = await Notebook.findById(newNotebook._id).populate('author', 'username');
+
+    const formattedNotebook = {
+      id: populatedNotebook._id,
+      title: populatedNotebook.title,
+      category: "General",
+      sources: populatedNotebook.documents.length, 
+      summary: populatedNotebook.aiSummary, 
+      author: `@${populatedNotebook.author.username}`, // Shows username, not ID!
+      likes: 0,
+      createdAt: populatedNotebook.createdAt
+    };
+
+    // Send success response back to React
+    res.status(201).json({
+      message: 'Notebook created successfully!',
+      notebook: formattedNotebook
+    });
+
+  } catch (error) {
+    console.error("Notebook Creation Error:", error);
+    res.status(500).json({ message: 'Failed to create notebook', error: error.message });
+  }
+});
+
+// route to 
+router.get('/createnotebook', async (req, res) => {
+  try {
+    // Grab anything that is Public, OR belongs to the specific logged-in user.
+    const notebooks = await Notebook.find({ isPublic: true })
+      .sort({ createdAt: -1 })
+      .populate('author', 'username _id');
+
+    // Format for the React frontend
+    const formattedNotebooks = notebooks.map(nb => ({
+      id: nb._id,
+      title: nb.title,
+      category: "General",
+      sources: nb.documents.length,
+      summary: nb.aiSummary,
+      author: nb.author ? `@${nb.author.username}` : "@unknown",
+      likes: nb.likes || 0,
+      createdAt: nb.createdAt
+    }));
+
+    res.status(200).json({ notebooks: formattedNotebooks });
+
+  } catch (error) {
+    console.error("Error fetching notebooks:", error);
+    res.status(500).json({ message: 'Error loading the notebook feed.' });
+  }
+});
+
+// route for like notebook
+router.post('/like/:id', requireAuth, async (req, res) => {
+  try {
+    // React will tell us if it wants to 'like' (+1) or 'unlike' (-1)
+    const { action } = req.body; 
+    const mathValue = action === 'unlike' ? -1 : 1;
+
+    // Instantly find the notebook and do the math in one step
+    const notebook = await Notebook.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { likes: mathValue } },
+      { new: true } // This returns the newly updated document
+    );
+
+    if (!notebook) return res.status(404).json({ message: 'Notebook not found' });
+    
+    // Send back the new total so React can update the UI
+    res.status(200).json({ likes: notebook.likes});
+
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating like status' });
+  }
+});
+
+router.get('/my-notebooks', requireAuth, async (req, res) => {
+  try {
+    // Fetch only notebooks where the author is the logged-in user
+    const notebooks = await Notebook.find({ author: req.user.id })
+      .sort({ createdAt: -1 });
+
+    const formattedNotebooks = notebooks.map(nb => ({
+      id: nb._id,
+      title: nb.title,
+      summary: nb.aiSummary,
+      isPublic: nb.isPublic, // Crucial for filtering
+      likes: nb.likes || 0,
+      createdAt: nb.createdAt
+    }));
+
+    res.status(200).json({ notebooks: formattedNotebooks });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching your notebooks' });
+  }
+});
+
 module.exports = router;

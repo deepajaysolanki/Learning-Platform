@@ -1,30 +1,35 @@
 import React, { useEffect, useRef, useState } from "react";
-// Removed useNavigate and gsap if you aren't using them right now to clean up warnings
 import { Helmet } from "react-helmet-async";
-import { GoogleLogin } from "@react-oauth/google"; 
-import { GoogleOAuthProvider } from '@react-oauth/google'
+import { GoogleLogin } from "@react-oauth/google";
 import { gsap } from "gsap";
 import "../styles/Login.css";
 
 const Login = () => {
-  // 🔥 FIX 3: Initialize the ref
   const pageScopeRef = useRef(null);
 
-  // Standard Login State
-  const [name, setName] = useState("");
+  // ✅ 1. Unified State: We only need one variable for the username/email input
+  const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
-  // New Google OAuth State
+  // Google OAuth State
   const [needsUsername, setNeedsUsername] = useState(false);
   const [googleEmail, setGoogleEmail] = useState("");
   const [newUsername, setNewUsername] = useState("");
 
   useEffect(() => {
-    // Premium entry animation sequence matching the rest of the application
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("msg") === "login_required") {
+      setMessage("Please log in or create an account to access this feature.");
+    }
+  }, []);
+
+  useEffect(() => {
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: "power3.out", duration: 0.8 } });
-      
+      const tl = gsap.timeline({
+        defaults: { ease: "power3.out", duration: 0.8 },
+      });
+
       tl.fromTo(".login-card", { opacity: 0, y: 30, scale: 0.98 }, { opacity: 1, y: 0, scale: 1, delay: 0.1 })
         .fromTo(".login-header > *", { opacity: 0, y: 15 }, { opacity: 1, y: 0, stagger: 0.1 }, "-=0.4")
         .fromTo(".form-group", { opacity: 0, y: 15 }, { opacity: 1, y: 0, stagger: 0.1 }, "-=0.5")
@@ -35,29 +40,36 @@ const Login = () => {
     return () => ctx.revert();
   }, []);
 
-  // 🟢 Standard Email/Password Login
+  // Standard Email/Password Login
   const handleStandardSubmit = async (e) => {
     e.preventDefault();
     try {
       const response = await fetch("http://localhost:3000/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, password }),
+        // ✅ 2. Payload matches the unified state exactly
+        body: JSON.stringify({ emailOrUsername, password }),
       });
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Server did not return JSON. Check your backend route URL!");
+      }
+
       const data = await response.json();
-      
+
       if (response.ok) {
         localStorage.setItem("studyAppToken", data.token);
-        window.location.href = "/dashboard";
+        window.location.href = "/";
       } else {
         setMessage(data.message || "Login failed.");
       }
     } catch (error) {
-      setMessage("Network error.");
+      setMessage(`${error}`);
     }
   };
 
-  // 🟢 Google Login Success Handler
+  // Google Login Success Handler
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const response = await fetch("http://localhost:3000/google", {
@@ -69,10 +81,10 @@ const Login = () => {
 
       if (data.requireUsername) {
         setGoogleEmail(data.email);
-        setNeedsUsername(true); 
+        setNeedsUsername(true);
       } else if (response.ok) {
         localStorage.setItem("studyAppToken", data.token);
-        window.location.href = "/dashboard";
+        window.location.href = "/";
       }
     } catch (error) {
       console.log("THE REAL ERROR IS:", error);
@@ -80,7 +92,7 @@ const Login = () => {
     }
   };
 
-  // 🟢 Submit the New Username
+  // Submit the New Username
   const handleCompleteGoogleSignUp = async (e) => {
     e.preventDefault();
     try {
@@ -93,9 +105,9 @@ const Login = () => {
 
       if (response.ok) {
         localStorage.setItem("studyAppToken", data.token);
-        window.location.href = "/dashboard";
+        window.location.href = "/";
       } else {
-        setMessage(data.message); 
+        setMessage(data.message);
       }
     } catch (error) {
       setMessage("Error completing setup.");
@@ -117,7 +129,7 @@ const Login = () => {
             <div className="login-logo">
               <div className="login-logo-accent">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M4 4h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 10h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 16h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4z"/>
+                  <path d="M4 4h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 10h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 16h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4z" />
                 </svg>
               </div>
               <span>SmartStudy AI</span>
@@ -127,27 +139,28 @@ const Login = () => {
           </div>
 
           {!needsUsername ? (
-            /*  Wrapped the true condition in a React Fragment */
             <>
-              {/*  Corrected the onSubmit function name */}
               <form className="login-form" onSubmit={handleStandardSubmit}>
                 <div className="form-group">
-                  <label htmlFor="name">Email or username</label>
+                  <label htmlFor="emailOrUsername">Email or username</label>
+                  {/* ✅ 3. Input is fully bound to the unified state */}
                   <input
                     type="text"
-                    id="name"
-                    name="name"
+                    id="emailOrUsername"
+                    name="emailOrUsername"
                     placeholder="you@email.com or @username"
                     required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    value={emailOrUsername}
+                    onChange={(e) => setEmailOrUsername(e.target.value)}
                   />
                 </div>
 
                 <div className="form-group">
                   <div className="label-wrapper-row">
                     <label htmlFor="password">Password</label>
-                    <a href="/forgot-password" className="forgot-password-link">Forgot password?</a>
+                    <a href="/forgot-password" className="forgot-password-link">
+                      Forgot password?
+                    </a>
                   </div>
                   <input
                     type="password"
@@ -164,20 +177,23 @@ const Login = () => {
                   Sign in
                 </button>
 
-                {message && (
-                  <p className="status-msg">{message}</p>
-                )}
+                {message && <p className="status-msg">{message}</p>}
               </form>
-          
+
               <div className="divider-row">
                 <span>or</span>
               </div>
 
-              {/*  Used the official component so the backend receives the correct token */}
-              <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
-                <GoogleLogin 
-                  onSuccess={handleGoogleSuccess} 
-                  onError={() => setMessage("Google verification failed")} 
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  width: "100%",
+                }}
+              >
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setMessage("Google verification failed")}
                 />
               </div>
 
@@ -188,23 +204,29 @@ const Login = () => {
           ) : (
             <form onSubmit={handleCompleteGoogleSignUp} className="login-form">
               <h2>Almost there!</h2>
-              <p>You are signing in as <strong>{googleEmail}</strong>.</p>
-              
+              <p>
+                You are signing in as <strong>{googleEmail}</strong>.
+              </p>
+
               <div className="form-group">
                 <label>Please choose a unique username.</label>
-                <input 
-                  type="text" 
-                  required 
-                  value={newUsername} 
-                  onChange={(e) => setNewUsername(e.target.value)} 
+                <input
+                  type="text"
+                  required
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
                 />
               </div>
-              
+
               <button type="submit" className="btn-submit-login">
                 Complete Setup
               </button>
-              
-              {message && <p className="status-msg" style={{ color: "red" }}>{message}</p>}
+
+              {message && (
+                <p className="status-msg" style={{ color: "red" }}>
+                  {message}
+                </p>
+              )}
             </form>
           )}
         </div>

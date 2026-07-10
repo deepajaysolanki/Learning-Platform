@@ -1,7 +1,8 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { GoogleLogin } from "@react-oauth/google";
-import "../styles/Login.css"; // Reusing your existing awesome styles!
+import { gsap } from "gsap";
+import "../styles/Registration.css";
 
 const Register = () => {
   const pageScopeRef = useRef(null);
@@ -18,6 +19,20 @@ const Register = () => {
   const [needsUsername, setNeedsUsername] = useState(false);
   const [googleEmail, setGoogleEmail] = useState("");
   const [newUsername, setNewUsername] = useState("");
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: "power3.out", duration: 0.8 } });
+      
+      tl.fromTo(".login-card", { opacity: 0, y: 30, scale: 0.98 }, { opacity: 1, y: 0, scale: 1, delay: 0.1 })
+        .fromTo(".login-header > *", { opacity: 0, y: 15 }, { opacity: 1, y: 0, stagger: 0.1 }, "-=0.4")
+        .fromTo(".form-group", { opacity: 0, y: 15 }, { opacity: 1, y: 0, stagger: 0.1 }, "-=0.5")
+        .fromTo(".btn-submit-login, .status-msg", { opacity: 0, scale: 0.95 }, { opacity: 1, scale: 1, stagger: 0.1 }, "-=0.4")
+        .fromTo(".divider-row, .btn-google-login, .signup-redirect", { opacity: 0, y: 10 }, { opacity: 1, y: 0, stagger: 0.1 }, "-=0.4");
+    }, pageScopeRef);
+
+    return () => ctx.revert();
+  }, []);
 
   // validation function for the registration form
   const validateForm = () => {
@@ -104,7 +119,7 @@ const Register = () => {
       } else if (response.ok) {
         // They actually already have an account, so just log them in!
         localStorage.setItem("studyAppToken", data.token);
-        window.location.href = "/dashboard";
+        window.location.href = "/";
       }
     } catch (error) {
       setMessage("Google registration failed.");
@@ -128,7 +143,7 @@ const Register = () => {
       if (response.ok) {
         // Backend issues a token here, so log them straight in
         localStorage.setItem("studyAppToken", data.token);
-        window.location.href = "/dashboard";
+        window.location.href = "/";
       } else {
         setMessage(data.message);
       }
