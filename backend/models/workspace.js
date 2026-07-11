@@ -1,7 +1,7 @@
 const express = require('express');
 const mongooose = require('mongoose');
 
-require('dotenv').config();
+require('dotenv').config({ path: '../.env'});
 const uri = process.env.MONGO_URI;
 mongooose.connect(uri);
 

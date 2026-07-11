@@ -3,7 +3,7 @@ var router = express.Router();
 const workspaceModel = require('../models/workspace');
 const multer = require('multer');
 const { GoogleGenAI } = require('@google/genai');
-require('dotenv').config();
+require('dotenv').config({ path: '../.env'});
 const User = require('../models/Users');
 const bcrypt = require('bcrypt');
 const upload = multer({ storage: multer.memoryStorage() });
