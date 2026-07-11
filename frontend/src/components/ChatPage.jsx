@@ -1,0 +1,249 @@
+import React, { useState, useRef, useEffect } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
+import ReactMarkdown from 'react-markdown';
+
+export default function ChatPage() {
+  const { id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const [notebook, setNotebook] = useState(location.state?.notebook || null);
+  const [fullTextLoaded, setFullTextLoaded] = useState(false);
+
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // 🔥 Fixed Ref for scrolling
+  const chatContainerRef = useRef(null);
+
+  // Fetch the full notebook data (with documents) when the page loads
+  useEffect(() => {
+    const fetchFullNotebook = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/notebook/${id}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          setNotebook(data.notebook);
+          setFullTextLoaded(true);
+
+          // Initialize AI chat once we have the notebook title
+          setMessages([
+            {
+              role: "ai",
+              text: `Hi! I'm ready to help you study "${data.notebook.title}". Ask me anything!`,
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error("Failed to load full notebook text", error);
+      }
+    };
+
+    fetchFullNotebook();
+  }, [id]);
+
+  // 🔥 Auto-scroll ONLY the chat container
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSend = async (e) => {
+    e.preventDefault();
+    if (!input.trim() || !notebook) return;
+
+    const userText = input;
+    setMessages((prev) => [...prev, { role: "user", text: userText }]);
+    setInput("");
+    setIsLoading(true);
+
+    try {
+      const token = localStorage.getItem("studyAppToken");
+      const notebookId = notebook._id || notebook.id || id;
+
+      const response = await fetch(
+        `http://localhost:3000/notebook/${notebookId}/chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ message: userText }),
+        },
+      );
+
+      const data = await response.json();
+      if (response.ok) {
+        setMessages((prev) => [...prev, { role: "ai", text: data.reply }]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          { role: "ai", text: "Error: Could not get an answer." },
+        ]);
+      }
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        { role: "ai", text: "Network error occurred." },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!notebook && !fullTextLoaded) {
+    return (
+      <div style={{ padding: "40px", textAlign: "center", fontFamily: "sans-serif" }}>
+        Loading Study Mode...
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <Helmet>
+        <title>Study Mode - {notebook?.title || "Notebook"}</title>
+      </Helmet>
+
+      <div style={{ display: "flex", height: "100vh", width: "100vw", overflow: "hidden", backgroundColor: "#f8fafc", fontFamily: "sans-serif" }}>
+        
+        {/* LEFT SIDE: The Document */}
+        <div style={{ flex: 1, padding: "40px", overflowY: "auto" }}>
+          <button
+            onClick={() => navigate(-1)}
+            style={{ padding: "8px 16px", marginBottom: "24px", cursor: "pointer", borderRadius: "8px", border: "1px solid #cbd5e1", backgroundColor: "white", fontWeight: "bold" }}
+          >
+            ← Back
+          </button>
+
+          <h1 style={{ fontSize: "2.5rem", marginBottom: "10px", color: "#0f172a" }}>
+            {notebook.title}
+          </h1>
+          <p style={{ color: "#64748b", marginBottom: "30px" }}>
+            Created by {notebook.author} • {notebook.documents?.length || notebook.sources || 0} Sources
+          </p>
+
+          <div style={{ backgroundColor: "white", padding: "32px", borderRadius: "12px", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0" }}>
+            <h3 style={{ borderBottom: "2px solid #eef2ff", paddingBottom: "10px", marginBottom: "20px", color: "#334155" }}>
+              Study Material
+            </h3>
+
+            {!fullTextLoaded ? (
+              <p style={{ color: "#64748b", fontStyle: "italic" }}>
+                Loading document text...
+              </p>
+            ) : notebook.documents && notebook.documents.length > 0 ? (
+              notebook.documents.map((doc, index) => (
+                <div key={index} style={{ marginBottom: "24px" }}>
+                  <h4 style={{ color: "#64748b", marginBottom: "12px", fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    📄 {doc.fileName}
+                  </h4>
+                  <p style={{ whiteSpace: "pre-wrap", lineHeight: "1.8", color: "#334155", fontSize: "16px" }}>
+                    {doc.rawText}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <div style={{ color: "#334155" }}>
+                <p style={{ color: "#64748b", fontStyle: "italic", marginBottom: "16px" }}>
+                  No raw document text available. Showing AI Summary instead:
+                </p>
+                <p style={{ whiteSpace: "pre-wrap", lineHeight: "1.8", fontSize: "16px" }}>
+                  {notebook.summary || notebook.aiSummary}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT SIDE: The AI Chat */}
+        <div style={{ width: "450px", flexShrink: 0, borderLeft: "1px solid #e2e8f0", backgroundColor: "white", display: "flex", flexDirection: "column" }}>
+          
+          <div style={{ padding: "16px 20px", borderBottom: "1px solid #e2e8f0", backgroundColor: "#f8fafc" }}>
+            <h3 style={{ margin: 0, fontSize: "16px", color: "#0f172a" }}>
+              AI Tutor
+            </h3>
+          </div>
+
+          {/* 🔥 ATTACHED THE REF HERE FOR SCROLLING */}
+          <div
+            ref={chatContainerRef}
+            style={{ flex: 1, padding: "20px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "16px" }}
+          >
+            {messages.map((msg, i) => (
+              <div
+                key={i}
+                style={{ display: "flex", justifyContent: msg.role === "ai" ? "flex-start" : "flex-end" }}
+              >
+                <div
+                  style={{
+                    backgroundColor: msg.role === "ai" ? "#f8fafc" : "#6366f1",
+                    color: msg.role === "ai" ? "#334155" : "#ffffff",
+                    padding: "16px",
+                    borderRadius: msg.role === "ai" ? "12px 12px 12px 4px" : "12px 12px 4px 12px",
+                    maxWidth: "90%",
+                    fontSize: "15px",
+                    lineHeight: "1.6",
+                    border: msg.role === "ai" ? "1px solid #e2e8f0" : "none",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  {/* 🔥 REACT MARKDOWN ADDED HERE */}
+                  {msg.role === "ai" ? (
+                    <ReactMarkdown
+                      components={{
+                        p: ({ node, ...props }) => <p style={{ margin: "0 0 10px 0" }} {...props} />,
+                        ul: ({ node, ...props }) => <ul style={{ margin: "0 0 10px 20px" }} {...props} />,
+                        ol: ({ node, ...props }) => <ol style={{ margin: "0 0 10px 20px" }} {...props} />,
+                        h3: ({ node, ...props }) => <h3 style={{ margin: "15px 0 10px 0", fontSize: "18px" }} {...props} />,
+                        h4: ({ node, ...props }) => <h4 style={{ margin: "15px 0 10px 0", fontSize: "16px" }} {...props} />,
+                      }}
+                    >
+                      {msg.text}
+                    </ReactMarkdown>
+                  ) : (
+                    msg.text
+                  )}
+                </div>
+              </div>
+            ))}
+            
+            {isLoading && (
+              <div style={{ display: "flex", justifyContent: "flex-start" }}>
+                <div style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", padding: "12px 16px", borderRadius: "12px 12px 12px 4px", color: "#64748b", fontSize: "14px", fontStyle: "italic" }}>
+                  Thinking...
+                </div>
+              </div>
+            )}
+            {/* 🔥 Removed the broken chatEndRef div */}
+          </div>
+
+          <form
+            onSubmit={handleSend}
+            style={{ display: "flex", padding: "16px", borderTop: "1px solid #e2e8f0", backgroundColor: "#ffffff", gap: "10px" }}
+          >
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask a question..."
+              style={{ flex: 1, padding: "10px 16px", borderRadius: "24px", border: "1px solid #cbd5e1", outline: "none", fontSize: "14px" }}
+            />
+            <button
+              type="submit"
+              disabled={isLoading || !input.trim()}
+              style={{ padding: "8px 16px", backgroundColor: "#6366f1", color: "white", border: "none", borderRadius: "24px", cursor: "pointer", fontWeight: "600" }}
+            >
+              Send
+            </button>
+          </form>
+        </div>
+      </div>
+    </>
+  );
+}

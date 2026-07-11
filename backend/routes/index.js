@@ -7,12 +7,12 @@ require('dotenv').config();
 const User = require('../models/Users');
 const bcrypt = require('bcrypt');
 const upload = multer({ storage: multer.memoryStorage() });
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const Notebook = require('../models/Notebook');
 const requireAuth = require('../middleware/auth');
 
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 // -------------------------------------
 router.get('/', function (req, res, next) {
   res.send('Welcome to the Workspace API');
@@ -387,5 +387,66 @@ router.get('/my-notebooks', requireAuth, async (req, res) => {
     res.status(500).json({ message: 'Error fetching your notebooks' });
   }
 });
+
+// GET full details of a single notebook
+router.get('/notebook/:id', async (req, res) => {
+  try {
+    const notebook = await Notebook.findById(req.params.id);
+    if (!notebook) {
+      return res.status(404).json({ message: 'Notebook not found' });
+    }
+    res.status(200).json({ notebook });
+  } catch (error) {
+    console.error("Error fetching single notebook:", error);
+    res.status(500).json({ message: 'Error fetching notebook' });
+  }
+});
+
+// Chat with a specific notebook
+router.post('/notebook/:id/chat', requireAuth, async (req, res) => {
+  try {
+    console.log("BOOM! The backend received the chat request!");
+
+    const { message } = req.body;
+    
+    // 1. Fetch the notebook to get the context
+    const notebook = await Notebook.findById(req.params.id);
+    if (!notebook) {
+      return res.status(404).json({ message: 'Notebook not found' });
+    }
+
+    // 2. Build the strict prompt context
+    const systemInstruction = `
+      You are an expert, highly encouraging study tutor. 
+      The user is currently studying a notebook with the content provided below. 
+      
+      Your Goal:
+      1. Use the notebook content as the foundation and context for the conversation.
+      2. If the user asks a question about these concepts, explain them deeply. Use your vast outside knowledge to provide helpful examples, analogies, and step-by-step breakdowns that aren't in the raw notes.
+      3. If the user asks something completely unrelated to the general subject of these notes, politely bring the conversation back to the current study topic.
+      
+      NOTEBOOK CONTENT:
+      ${notebook.aiSummary || "No summary available."}
+    `;
+
+    // 3. Combine the instructions and the user's question
+    const prompt = `${systemInstruction}\n\nUser Question: ${message}`;
+
+    // 4. Generate the response using the new SDK syntax
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt
+    });
+
+    // 5. Send the text back to React
+    res.status(200).json({ reply: response.text });
+
+  } catch (error) {
+    console.error("Chat Error:", error);
+    res.status(500).json({ message: 'Error processing chat request', error: error.message });
+  }
+});
+
+
 
 module.exports = router;

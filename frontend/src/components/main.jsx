@@ -13,6 +13,7 @@ import Login from "./Login.jsx";
 import MyNotebooks from "../components/MyNotebooks.jsx"
 import { HelmetProvider } from "react-helmet-async";
 import { GoogleOAuthProvider } from '@react-oauth/google'
+import ChatPage from "../components/ChatPage.jsx";
 
 function MainApp() {
   return (
@@ -25,6 +26,7 @@ function MainApp() {
         <Route path="/register" element={<Registration />} />
         <Route path="/login" element={<Login />} />
         <Route path="/my-notebooks" element={<MyNotebooks />} />
+        <Route path="/notebook/:id/study" element={<ChatPage />} />
       </Routes>
       <Footer />
     </>
