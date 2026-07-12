@@ -32,7 +32,8 @@ function MainApp() {
     </>
   );
 }
-console.log("GOOGLE_CLIENT_ID from env:", import.meta.env.VITE_GOOGLE_CLIENT_ID); // Debugging line
+console.log("GOOGLE_CLIENT_ID from env:", import.meta.env.VITE_GOOGLE_CLIENT_ID);
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <HelmetProvider>

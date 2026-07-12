@@ -3,7 +3,8 @@ var router = express.Router();
 const workspaceModel = require('../models/workspace');
 const multer = require('multer');
 const { GoogleGenAI } = require('@google/genai');
-require('dotenv').config({ path: '../.env'});
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const User = require('../models/Users');
 const bcrypt = require('bcrypt');
 const upload = multer({ storage: multer.memoryStorage() });
@@ -11,8 +12,18 @@ const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const Notebook = require('../models/Notebook');
 const requireAuth = require('../middleware/auth');
+const cloudinary = require('cloudinary').v2;
+const mammoth = require('mammoth');
+const officeParser = require('officeparser');
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// cloudinary setup 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
 // -------------------------------------
 router.get('/', function (req, res, next) {
   res.send('Welcome to the Workspace API');
@@ -225,7 +236,7 @@ router.post('/workspaces/:id/ask', async function (req, res,) {
 
     // send the prompt to the AI model
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash',
       contents: prompt,
     });
 
@@ -239,22 +250,75 @@ router.post('/workspaces/:id/ask', async function (req, res,) {
   }
 })
 
-// 
+// route to ..
+const uploadToCloudinary = (fileBuffer) => {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload_stream({ resource_type: 'auto' }, (error, result) => {
+      if (error) reject(error);
+      else resolve(result.secure_url);
+    }).end(fileBuffer);
+  });
+};
+
+// route for create notebook
 router.post('/createnotebook', requireAuth, upload.array('documents', 10), async (req, res) => {
   try {
     // Extract the text fields from the request
     const { title, isPublic } = req.body;
     const authorId = req.user.id;
 
-    // Format the uploaded files
-    const processedDocuments = req.files.map(file => {
+    // Helper function to extract text based on file type
+    const extractTextFromBuffer = async (file) => {
+      const mime = file.mimetype;
+
+      try {
+        if (mime.includes('text') || mime.includes('json')) {
+          return file.buffer.toString('utf-8');
+        }
+
+        // Extract HTML instead of Raw Text for Word Docs
+        if (mime.includes('wordprocessingml.document') || file.originalname.endsWith('.docx')) {
+          const result = await mammoth.convertToHtml({ buffer: file.buffer });
+          return result.value; // This returns structured HTML strings like <h2>, <p>, <strong>
+        }
+
+        // Handle PowerPoint Presentations (.pptx)
+        if (mime.includes('presentationml.presentation') || file.originalname.endsWith('.pptx')) {
+          let extractedText = await officeParser.parseOffice(file.buffer);
+          
+          // Force the object into a string before it hits MongoDB or Gemini
+          if (typeof extractedText !== 'string') {
+            if (extractedText && typeof extractedText.toText === 'function') {
+              extractedText = extractedText.toText(); // Uses the object's native text converter!
+            } else {
+              extractedText = JSON.stringify(extractedText); // Ultimate fallback
+            }
+          }
+          
+          return extractedText;
+        }
+
+        return "Binary file content stored in cloud.";
+      } catch (parseError) {
+        console.error(`Failed to parse text from ${file.originalname}:`, parseError);
+        return `[Error extracting text from ${file.originalname}]`;
+      }
+    };
+
+    // Use Promise.all to upload all files to Cloudinary in parallel
+    const processedDocuments = await Promise.all(req.files.map(async (file) => {
+      const fileUrl = await uploadToCloudinary(file.buffer);
+
+      // Dynamically extract text based on the file type!
+      const extractedText = await extractTextFromBuffer(file);
+
       return {
         fileName: file.originalname,
-        fileUrl: "pending_cloud_url", // Placeholder until you attach cloud storage
-        fileType: file.mimetype.split('/')[1], // e.g., 'pdf' or 'plain'
-        rawText: file.mimetype.includes('text') ? file.buffer.toString('utf-8') : "Binary file data hidden for MVP."
+        fileUrl: fileUrl,
+        fileType: file.mimetype.split('/')[1],
+        rawText: extractedText // No longer a hardcoded placeholder string!
       };
-    });
+    }));
 
     if (processedDocuments.length === 0) {
       return res.status(400).json({ message: "You must upload at least one document." });
@@ -262,7 +326,12 @@ router.post('/createnotebook', requireAuth, upload.array('documents', 10), async
 
     // Generate the 2-Line AI Summary
     // We grab the text from the FIRST document to generate the overview
-    const firstDocText = processedDocuments[0].rawText || "No readable text found in the first document.";
+    let firstDocText = processedDocuments[0].rawText || "No readable text found in the first document.";
+
+    // 🔴 THE FIX: Force firstDocText to be a string so .substring() never crashes on PPTX objects
+    if (typeof firstDocText !== 'string') {
+      firstDocText = JSON.stringify(firstDocText);
+    }
 
     const summaryPrompt = `
       You are an expert educational assistant. 
@@ -273,12 +342,16 @@ router.post('/createnotebook', requireAuth, upload.array('documents', 10), async
       ${firstDocText.substring(0, 3000)} // Limiting characters to save Gemini tokens
     `;
 
+    // Initialize AI configuration right where it's needed
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
     const summaryResponse = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash', // Restored stable baseline model identifier
       contents: summaryPrompt,
     });
 
     const finalSummary = summaryResponse.text;
+    console.log("Checking API Key:", process.env.GEMINI_API_KEY ? "Key exists" : "KEY IS MISSING!");
 
     // Save everything to MongoDB
     const newNotebook = await Notebook.create({
@@ -296,8 +369,8 @@ router.post('/createnotebook', requireAuth, upload.array('documents', 10), async
       id: populatedNotebook._id,
       title: populatedNotebook.title,
       category: "General",
-      sources: populatedNotebook.documents.length, 
-      summary: populatedNotebook.aiSummary, 
+      sources: populatedNotebook.documents.length,
+      summary: populatedNotebook.aiSummary,
       author: `@${populatedNotebook.author.username}`, // Shows username, not ID!
       likes: 0,
       createdAt: populatedNotebook.createdAt
@@ -314,7 +387,6 @@ router.post('/createnotebook', requireAuth, upload.array('documents', 10), async
     res.status(500).json({ message: 'Failed to create notebook', error: error.message });
   }
 });
-
 // route to 
 router.get('/createnotebook', async (req, res) => {
   try {
@@ -341,13 +413,14 @@ router.get('/createnotebook', async (req, res) => {
     console.error("Error fetching notebooks:", error);
     res.status(500).json({ message: 'Error loading the notebook feed.' });
   }
+
 });
 
 // route for like notebook
 router.post('/like/:id', requireAuth, async (req, res) => {
   try {
     // React will tell us if it wants to 'like' (+1) or 'unlike' (-1)
-    const { action } = req.body; 
+    const { action } = req.body;
     const mathValue = action === 'unlike' ? -1 : 1;
 
     // Instantly find the notebook and do the math in one step
@@ -358,9 +431,9 @@ router.post('/like/:id', requireAuth, async (req, res) => {
     );
 
     if (!notebook) return res.status(404).json({ message: 'Notebook not found' });
-    
+
     // Send back the new total so React can update the UI
-    res.status(200).json({ likes: notebook.likes});
+    res.status(200).json({ likes: notebook.likes });
 
   } catch (error) {
     res.status(500).json({ message: 'Error updating like status' });
@@ -408,7 +481,8 @@ router.post('/notebook/:id/chat', requireAuth, async (req, res) => {
     console.log("BOOM! The backend received the chat request!");
 
     const { message } = req.body;
-    
+    // const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
     // 1. Fetch the notebook to get the context
     const notebook = await Notebook.findById(req.params.id);
     if (!notebook) {
@@ -434,8 +508,8 @@ router.post('/notebook/:id/chat', requireAuth, async (req, res) => {
 
     // 4. Generate the response using the new SDK syntax
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt
+      model: 'gemini-3.5-flash',
+      contents: prompt
     });
 
     // 5. Send the text back to React

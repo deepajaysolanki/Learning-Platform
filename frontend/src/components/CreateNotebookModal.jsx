@@ -114,7 +114,7 @@ const CreateNotebookModal = ({ isOpen, onClose, onNotebookCreated }) => {
             <input
               type="file"
               multiple
-              accept=".pdf,.txt,.ppt,.pptx,.doc,.docx"
+              accept=".pdf, .txt, .doc, .docx, .ppt, .pptx"
               onChange={handleFileChange}
               disabled={isUploading}
               style={{ padding: '10px 0' }}
