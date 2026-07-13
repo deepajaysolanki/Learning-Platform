@@ -10,13 +10,20 @@ export default function ChatPage() {
 
   const [notebook, setNotebook] = useState(location.state?.notebook || null);
   const [fullTextLoaded, setFullTextLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState("chat");
 
-  const [messages, setMessages] = useState([]);
+  // Global Input State
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Fixed Ref for scrolling
+  // Chat State
+  const [messages, setMessages] = useState([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
   const chatContainerRef = useRef(null);
+
+  // Audio State
+  const [audioScript, setAudioScript] = useState(null);
+  const [isAudioLoading, setIsAudioLoading] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   // Fetch the full notebook data (with documents) when the page loads
   useEffect(() => {
@@ -33,7 +40,7 @@ export default function ChatPage() {
           setMessages([
             {
               role: "ai",
-              text: `Hi! I'm ready to help you study "${data.notebook.title}". Ask me anything!`,
+              text: `Hi! I'm ready to help you study "${data.notebook.title}". Ask me a question, or switch to the Audio tab to have me generate a custom podcast lesson for you!`,
             },
           ]);
         }
@@ -48,19 +55,32 @@ export default function ChatPage() {
   // Auto-scroll ONLY the chat container
   useEffect(() => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [messages]);
 
+
+  // ==========================================
+  // UNIFIED SUBMIT HANDLER
+  // ==========================================
   const handleSend = async (e) => {
     e.preventDefault();
     if (!input.trim() || !notebook) return;
 
     const userText = input;
+    setInput(""); // Clear input immediately for snappy UX
+
+    if (activeTab === "chat") {
+      await handleChatSubmit(userText);
+    } else if (activeTab === "audio") {
+      await handleAudioSubmit(userText);
+    }
+  };
+
+  // --- CHAT LOGIC ---
+  const handleChatSubmit = async (userText) => {
     setMessages((prev) => [...prev, { role: "user", text: userText }]);
-    setInput("");
-    setIsLoading(true);
+    setIsChatLoading(true);
 
     try {
       const token = localStorage.getItem("studyAppToken");
@@ -75,7 +95,7 @@ export default function ChatPage() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ message: userText }),
-        },
+        }
       );
 
       const data = await response.json();
@@ -93,8 +113,62 @@ export default function ChatPage() {
         { role: "ai", text: "Network error occurred." },
       ]);
     } finally {
-      setIsLoading(false);
+      setIsChatLoading(false);
     }
+  };
+
+  // --- AUDIO LOGIC ---
+  const handleAudioSubmit = async (userText = null) => {
+    setIsAudioLoading(true);
+    // If they generated a new script, stop any currently playing audio
+    window.speechSynthesis.cancel();
+    setIsPlaying(false);
+
+    try {
+      const notebookId = notebook._id || notebook.id || id;
+      
+      const response = await fetch("http://localhost:3000/generate-script", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // Pass the userText as the customPrompt!
+        body: JSON.stringify({ notebookId, customPrompt: userText }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setAudioScript(data.script);
+      playBrowserAudio(data.script);
+      
+    } catch (error) {
+      console.error("Audio generation failed:", error);
+      alert("Could not generate custom audio overview.");
+    } finally {
+      setIsAudioLoading(false);
+    }
+  };
+
+  const playBrowserAudio = (text) => {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    const voices = window.speechSynthesis.getVoices();
+    utterance.voice = voices.find((v) => v.lang === "en-US") || voices[0];
+
+    utterance.onstart = () => setIsPlaying(true);
+    utterance.onend = () => setIsPlaying(false);
+    utterance.onerror = () => setIsPlaying(false);
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const stopAudio = () => {
+    window.speechSynthesis.cancel();
+    setIsPlaying(false);
   };
 
   // Helper component to cleanly render specific layouts based on file extensions
@@ -128,7 +202,6 @@ export default function ChatPage() {
 
     // 2. 📊 PowerPoint Presentation (Native CSS Layout - No Iframes!)
     if (fileName.endsWith(".pptx") || fileName.endsWith(".ppt")) {
-      // Split the raw text string into individual lines, ignoring empty spaces
       const lines = doc.rawText
         ? doc.rawText.split("\n").filter((line) => line.trim().length > 0)
         : [];
@@ -142,8 +215,6 @@ export default function ChatPage() {
             <div className="slide-container">
               {lines.map((line, idx) => {
                 const trimmed = line.trim();
-
-                // Heuristic: Short, uppercase lines or pure numbers act as Slide Titles
                 const isHeader =
                   trimmed.length < 60 &&
                   (trimmed === trimmed.toUpperCase() ||
@@ -166,7 +237,6 @@ export default function ChatPage() {
             </div>
           </div>
 
-          {/* Custom CSS specifically for PowerPoint outlines */}
           <style>{`
             .google-slides-preview {
               padding: 20px;
@@ -282,15 +352,11 @@ export default function ChatPage() {
 
     // 4. Smart Plain Text (.txt) & Generic Fallback Reader
     if (fileName.endsWith(".txt") || fileName.endsWith(".TXT")) {
-      // This uses Regex to find hidden lists and paragraphs inside giant blocks of text!
-
       let rawText = doc.rawText || "[No readable text extracted]";
 
-      // Inject line breaks before numbers (e.g., " 1. ") and hyphens (e.g., " - ") so they separate naturally
       rawText = rawText.replace(/(\s(?=\d+\.\s))/g, "\n\n");
       rawText = rawText.replace(/(\s(?=-\s))/g, "\n");
 
-      // Split the text into lines now that we forced line breaks
       const textLines = rawText
         .split("\n")
         .filter((line) => line.trim().length > 0);
@@ -312,7 +378,6 @@ export default function ChatPage() {
             {textLines.map((line, idx) => {
               const trimmed = line.trim();
 
-              // 1. Format "Subject:" or header titles (Blue, large, underlined)
               if (trimmed.toLowerCase().startsWith("subject:")) {
                 return (
                   <h2
@@ -331,7 +396,6 @@ export default function ChatPage() {
                 );
               }
 
-              // 2. Format numbered lists like "1. Client-Server Architecture" (Bold, dark)
               if (/^\d+\.\s/.test(trimmed)) {
                 return (
                   <h3
@@ -349,7 +413,6 @@ export default function ChatPage() {
                 );
               }
 
-              // 3. Format bullet points like "- The Client (Front-end): ..." (Indented with a custom dot)
               if (trimmed.startsWith("- ")) {
                 return (
                   <div
@@ -366,13 +429,11 @@ export default function ChatPage() {
                     <span style={{ color: "#6366f1", fontWeight: "bold" }}>
                       •
                     </span>
-                    {/* Remove the original hyphen and render the text */}
                     <span>{trimmed.substring(2)}</span>
                   </div>
                 );
               }
 
-              // 4. Standard paragraph text for everything else
               return (
                 <p
                   key={idx}
@@ -408,6 +469,7 @@ export default function ChatPage() {
       );
     }
   };
+
   if (!notebook && !fullTextLoaded) {
     return (
       <div
@@ -508,7 +570,6 @@ export default function ChatPage() {
                     {doc.fileName.toLowerCase().endsWith(".pptx") ? "📊" : "📄"}{" "}
                     {doc.fileName}
                   </h4>
-                  {/* Dynamic conditional render engine */}
                   <DocumentRenderer doc={doc} />
                 </div>
               ))
@@ -537,7 +598,7 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {/* RIGHT SIDE: The AI Chat */}
+        {/* RIGHT SIDE: */}
         <div
           style={{
             width: "450px",
@@ -548,113 +609,196 @@ export default function ChatPage() {
             flexDirection: "column",
           }}
         >
+          {/* TABS */}
           <div
             style={{
-              padding: "16px 20px",
+              display: "flex",
               borderBottom: "1px solid #e2e8f0",
               backgroundColor: "#f8fafc",
             }}
           >
-            <h3 style={{ margin: 0, fontSize: "16px", color: "#0f172a" }}>
-              AI Tutor
-            </h3>
+            <button
+              onClick={() => setActiveTab("chat")}
+              style={{
+                flex: 1,
+                padding: "16px",
+                border: "none",
+                backgroundColor: activeTab === "chat" ? "white" : "transparent",
+                color: activeTab === "chat" ? "#6366f1" : "#64748b",
+                borderBottom: activeTab === "chat" ? "2px solid #6366f1" : "2px solid transparent",
+                fontWeight: activeTab === "chat" ? "bold" : "normal",
+                cursor: "pointer",
+                fontSize: "15px",
+              }}
+            >
+              💬 Text Chat
+            </button>
+            <button
+              onClick={() => setActiveTab("audio")}
+              style={{
+                flex: 1,
+                padding: "16px",
+                border: "none",
+                backgroundColor: activeTab === "audio" ? "white" : "transparent",
+                color: activeTab === "audio" ? "#6366f1" : "#64748b",
+                borderBottom: activeTab === "audio" ? "2px solid #6366f1" : "2px solid transparent",
+                fontWeight: activeTab === "audio" ? "bold" : "normal",
+                cursor: "pointer",
+                fontSize: "15px",
+              }}
+            >
+              🎧 Audio Lesson
+            </button>
           </div>
 
-          <div
-            ref={chatContainerRef}
-            style={{
-              flex: 1,
-              padding: "20px",
-              overflowY: "auto",
-              display: "flex",
-              flexDirection: "column",
-              gap: "16px",
-            }}
-          >
-            {messages.map((msg, i) => (
-              <div
-                key={i}
-                style={{
-                  display: "flex",
-                  justifyContent: msg.role === "ai" ? "flex-start" : "flex-end",
-                }}
-              >
+          {/* DYNAMIC CONTENT AREA */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }}>
+            
+            {activeTab === "chat" ? (
+              
+              /* --- CHAT UI --- */
+              <>
                 <div
                   style={{
-                    backgroundColor: msg.role === "ai" ? "#f8fafc" : "#6366f1",
-                    color: msg.role === "ai" ? "#334155" : "#ffffff",
-                    padding: "16px",
-                    borderRadius:
-                      msg.role === "ai"
-                        ? "12px 12px 12px 4px"
-                        : "12px 12px 4px 12px",
-                    maxWidth: "90%",
-                    fontSize: "15px",
-                    lineHeight: "1.6",
-                    border: msg.role === "ai" ? "1px solid #e2e8f0" : "none",
-                    wordBreak: "break-word",
+                    padding: "16px 20px",
+                    borderBottom: "1px solid #e2e8f0",
+                    backgroundColor: "#f8fafc",
                   }}
                 >
-                  {msg.role === "ai" ? (
-                    <ReactMarkdown
-                      components={{
-                        p: ({ node, ...props }) => (
-                          <p style={{ margin: "0 0 10px 0" }} {...props} />
-                        ),
-                        ul: ({ node, ...props }) => (
-                          <ul style={{ margin: "0 0 10px 20px" }} {...props} />
-                        ),
-                        ol: ({ node, ...props }) => (
-                          <ol style={{ margin: "0 0 10px 20px" }} {...props} />
-                        ),
-                        h3: ({ node, ...props }) => (
-                          <h3
-                            style={{
-                              margin: "15px 0 10px 0",
-                              fontSize: "18px",
-                            }}
-                            {...props}
-                          />
-                        ),
-                        h4: ({ node, ...props }) => (
-                          <h4
-                            style={{
-                              margin: "15px 0 10px 0",
-                              fontSize: "16px",
-                            }}
-                            {...props}
-                          />
-                        ),
+                  <h3 style={{ margin: 0, fontSize: "16px", color: "#0f172a" }}>
+                    AI Tutor
+                  </h3>
+                </div>
+
+                <div
+                  ref={chatContainerRef}
+                  style={{
+                    flex: 1,
+                    padding: "20px",
+                    overflowY: "auto",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "16px",
+                  }}
+                >
+                  {messages.map((msg, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        display: "flex",
+                        justifyContent: msg.role === "ai" ? "flex-start" : "flex-end",
                       }}
                     >
-                      {msg.text}
-                    </ReactMarkdown>
-                  ) : (
-                    msg.text
+                      <div
+                        style={{
+                          backgroundColor: msg.role === "ai" ? "#f8fafc" : "#6366f1",
+                          color: msg.role === "ai" ? "#334155" : "#ffffff",
+                          padding: "16px",
+                          borderRadius:
+                            msg.role === "ai"
+                              ? "12px 12px 12px 4px"
+                              : "12px 12px 4px 12px",
+                          maxWidth: "90%",
+                          fontSize: "15px",
+                          lineHeight: "1.6",
+                          border: msg.role === "ai" ? "1px solid #e2e8f0" : "none",
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        {msg.role === "ai" ? (
+                          <ReactMarkdown
+                            components={{
+                              p: ({ node, ...props }) => <p style={{ margin: "0 0 10px 0" }} {...props} />,
+                              ul: ({ node, ...props }) => <ul style={{ margin: "0 0 10px 20px" }} {...props} />,
+                              ol: ({ node, ...props }) => <ol style={{ margin: "0 0 10px 20px" }} {...props} />,
+                              h3: ({ node, ...props }) => <h3 style={{ margin: "15px 0 10px 0", fontSize: "18px" }} {...props} />,
+                              h4: ({ node, ...props }) => <h4 style={{ margin: "15px 0 10px 0", fontSize: "16px" }} {...props} />,
+                            }}
+                          >
+                            {msg.text}
+                          </ReactMarkdown>
+                        ) : (
+                          msg.text
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  {isChatLoading && (
+                    <div style={{ display: "flex", justifyContent: "flex-start" }}>
+                      <div
+                        style={{
+                          backgroundColor: "#f8fafc",
+                          border: "1px solid #e2e8f0",
+                          padding: "12px 16px",
+                          borderRadius: "12px 12px 12px 4px",
+                          color: "#64748b",
+                          fontSize: "14px",
+                          fontStyle: "italic",
+                        }}
+                      >
+                        Thinking...
+                      </div>
+                    </div>
                   )}
                 </div>
-              </div>
-            ))}
+              </>
+              
+            ) : (
+              
+              /* --- AUDIO UI --- */
+              <div style={{ flex: 1, padding: "20px", overflowY: "auto", textAlign: "center" }}>
+                <h3 style={{ marginTop: "20px", color: "#0f172a" }}>🎧 Custom Audio Overview</h3>
+                <p style={{ color: "#64748b", fontSize: "14px", marginBottom: "30px" }}>
+                  Ask a question below, or generate a general summary!
+                </p>
 
-            {isLoading && (
-              <div style={{ display: "flex", justifyContent: "flex-start" }}>
-                <div
-                  style={{
-                    backgroundColor: "#f8fafc",
-                    border: "1px solid #e2e8f0",
-                    padding: "12px 16px",
-                    borderRadius: "12px 12px 12px 4px",
-                    color: "#64748b",
-                    fontSize: "14px",
-                    fontStyle: "italic",
-                  }}
-                >
-                  Thinking...
-                </div>
+                {!audioScript && !isAudioLoading && (
+                  <button 
+                    onClick={() => handleAudioSubmit(null)} 
+                    style={{ backgroundColor: "#2563eb", color: "white", padding: "12px 24px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "bold", width: "100%" }}
+                  >
+                    Generate General Overview
+                  </button>
+                )}
+
+                {isAudioLoading && (
+                  <div style={{ margin: "40px 0", color: "#6366f1", fontWeight: "bold" }}>
+                    ⏳ Generating your audio script...
+                  </div>
+                )}
+
+                {audioScript && !isAudioLoading && (
+                  <div style={{ textAlign: "left", marginTop: "20px" }}>
+                    {isPlaying ? (
+                      <button 
+                        onClick={stopAudio} 
+                        style={{ backgroundColor: "#dc2626", color: "white", padding: "10px 20px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "bold", width: "100%", marginBottom: "20px" }}
+                      >
+                        ⏹ Stop Playback
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => playBrowserAudio(audioScript)} 
+                        style={{ backgroundColor: "#16a34a", color: "white", padding: "10px 20px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "bold", width: "100%", marginBottom: "20px" }}
+                      >
+                        ▶️ Replay Audio
+                      </button>
+                    )}
+                    <div style={{ backgroundColor: "#f8fafc", padding: "15px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px", lineHeight: "1.6", color: "#334155" }}>
+                      <strong>Generated Script:</strong>
+                      <p style={{ marginTop: "10px" }}>{audioScript}</p>
+                    </div>
+                  </div>
+                )}
               </div>
+              
             )}
           </div>
 
+          {/* ==========================================
+              THE GLOBAL INPUT BOX (MOVED OUTSIDE TABS)
+              ========================================== */}
           <form
             onSubmit={handleSend}
             style={{
@@ -669,7 +813,7 @@ export default function ChatPage() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask a question..."
+              placeholder={activeTab === 'chat' ? "Ask a question..." : "What should the audio focus on?"}
               style={{
                 flex: 1,
                 padding: "10px 16px",
@@ -681,7 +825,7 @@ export default function ChatPage() {
             />
             <button
               type="submit"
-              disabled={isLoading || !input.trim()}
+              disabled={(activeTab === 'chat' ? isChatLoading : isAudioLoading) || !input.trim()}
               style={{
                 padding: "8px 16px",
                 backgroundColor: "#6366f1",
@@ -692,9 +836,10 @@ export default function ChatPage() {
                 fontWeight: "600",
               }}
             >
-              Send
+              {activeTab === 'chat' ? 'Send' : 'Generate'}
             </button>
           </form>
+
         </div>
       </div>
     </>

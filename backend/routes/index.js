@@ -2,7 +2,6 @@ var express = require('express');
 var router = express.Router();
 const workspaceModel = require('../models/workspace');
 const multer = require('multer');
-const { GoogleGenAI } = require('@google/genai');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const User = require('../models/Users');
@@ -16,7 +15,6 @@ const cloudinary = require('cloudinary').v2;
 const mammoth = require('mammoth');
 const officeParser = require('officeparser');
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 // cloudinary setup 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -285,8 +283,8 @@ router.post('/createnotebook', requireAuth, upload.array('documents', 10), async
         // Handle PowerPoint Presentations (.pptx)
         if (mime.includes('presentationml.presentation') || file.originalname.endsWith('.pptx')) {
           let extractedText = await officeParser.parseOffice(file.buffer);
-          
-          // Force the object into a string before it hits MongoDB or Gemini
+
+          // Force the object into a string before it hits MongoDB or AI
           if (typeof extractedText !== 'string') {
             if (extractedText && typeof extractedText.toText === 'function') {
               extractedText = extractedText.toText(); // Uses the object's native text converter!
@@ -294,7 +292,7 @@ router.post('/createnotebook', requireAuth, upload.array('documents', 10), async
               extractedText = JSON.stringify(extractedText); // Ultimate fallback
             }
           }
-          
+
           return extractedText;
         }
 
@@ -328,7 +326,7 @@ router.post('/createnotebook', requireAuth, upload.array('documents', 10), async
     // We grab the text from the FIRST document to generate the overview
     let firstDocText = processedDocuments[0].rawText || "No readable text found in the first document.";
 
-    // 🔴 THE FIX: Force firstDocText to be a string so .substring() never crashes on PPTX objects
+    // Force firstDocText to be a string so .substring() never crashes on PPTX objects
     if (typeof firstDocText !== 'string') {
       firstDocText = JSON.stringify(firstDocText);
     }
@@ -339,26 +337,51 @@ router.post('/createnotebook', requireAuth, upload.array('documents', 10), async
       Do not use filler words like "This document is about". Just state the summary.
       
       Document Excerpt:
-      ${firstDocText.substring(0, 3000)} // Limiting characters to save Gemini tokens
+      ${firstDocText.substring(0, 6000)}
     `;
 
-    // Initialize AI configuration right where it's needed
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
-    const summaryResponse = await ai.models.generateContent({
-      model: 'gemini-3.5-flash', // Restored stable baseline model identifier
-      contents: summaryPrompt,
+    // 🟢 HUGGING FACE ROUTE OVERHAUL
+    const hfResponse = await fetch("https://router.huggingface.co/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.HF_TOKEN}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "meta-llama/Llama-3.1-8B-Instruct",
+        messages: [
+          {
+            role: "system",
+            content: "You are an advanced academic assistant. Your task is to generate highly accurate, clear, and structured study summaries."
+          },
+          {
+            role: "user",
+            content: summaryPrompt
+          }
+        ],
+        max_tokens: 150, // Reduced since your prompt specifically asks for a maximum 2-line summary
+        temperature: 0.3  // Lower temperature makes it focus heavily on strict facts
+      })
     });
 
-    const finalSummary = summaryResponse.text;
-    console.log("Checking API Key:", process.env.GEMINI_API_KEY ? "Key exists" : "KEY IS MISSING!");
+    if (!hfResponse.ok) {
+      const errorText = await hfResponse.text();
+      console.error("🔴 HF Summary Generation Error:", errorText);
+      throw new Error("Hugging Face summary generation failed");
+    }
+
+    const data = await hfResponse.json();
+
+    // 🟢 FIXED: Extract response text into our summary variable
+    const aiSummary = data.choices[0].message.content;
+    console.log("🟢 Hugging Face Summary Generated Successfully!");
 
     // Save everything to MongoDB
     const newNotebook = await Notebook.create({
       title,
       author: authorId,
       isPublic: isPublic === 'true', // Convert string to boolean
-      aiSummary: finalSummary,
+      aiSummary: aiSummary,          // 🟢 FIXED: Changed from finalSummary to aiSummary
       documents: processedDocuments
     });
 
@@ -387,6 +410,7 @@ router.post('/createnotebook', requireAuth, upload.array('documents', 10), async
     res.status(500).json({ message: 'Failed to create notebook', error: error.message });
   }
 });
+
 // route to 
 router.get('/createnotebook', async (req, res) => {
   try {
@@ -476,51 +500,133 @@ router.get('/notebook/:id', async (req, res) => {
 });
 
 // Chat with a specific notebook
-router.post('/notebook/:id/chat', requireAuth, async (req, res) => {
+router.post('/notebook/:id/chat', async (req, res) => {
   try {
-    console.log("BOOM! The backend received the chat request!");
-
     const { message } = req.body;
-    // const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
-    // 1. Fetch the notebook to get the context
     const notebook = await Notebook.findById(req.params.id);
-    if (!notebook) {
-      return res.status(404).json({ message: 'Notebook not found' });
-    }
 
-    // 2. Build the strict prompt context
-    const systemInstruction = `
-      You are an expert, highly encouraging study tutor. 
-      The user is currently studying a notebook with the content provided below. 
-      
-      Your Goal:
-      1. Use the notebook content as the foundation and context for the conversation.
-      2. If the user asks a question about these concepts, explain them deeply. Use your vast outside knowledge to provide helpful examples, analogies, and step-by-step breakdowns that aren't in the raw notes.
-      3. If the user asks something completely unrelated to the general subject of these notes, politely bring the conversation back to the current study topic.
-      
-      NOTEBOOK CONTENT:
-      ${notebook.aiSummary || "No summary available."}
-    `;
+    if (!notebook) return res.status(404).json({ error: "Notebook not found" });
 
-    // 3. Combine the instructions and the user's question
-    const prompt = `${systemInstruction}\n\nUser Question: ${message}`;
+    // Build the context for the AI
+    const context = notebook.documents && notebook.documents.length > 0
+      ? notebook.documents.map(d => d.rawText).join('\n')
+      : (notebook.summary || notebook.aiSummary || "No context available.");
 
-    // 4. Generate the response using the new SDK syntax
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash',
-      contents: prompt
+    const systemPrompt = `You are an expert AI Tutor helping a student study their notebook titled "${notebook.title}". 
+    Use the following study material context to answer their question accurately:
+    
+    CONTEXT:
+    ${context.substring(0, 5000)} /* Truncate if necessary to save tokens */`;
+
+    // Hit the Hugging Face Router
+    const hfResponse = await fetch("https://router.huggingface.co/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.HF_TOKEN}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "meta-llama/Llama-3.1-8B-Instruct",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: message }
+        ],
+        max_tokens: 800,
+        temperature: 0.5 // Lower temperature for more accurate, factual tutor answers
+      })
     });
 
-    // 5. Send the text back to React
-    res.status(200).json({ reply: response.text });
+    if (!hfResponse.ok) {
+      throw new Error("Hugging Face API failed");
+    }
+
+    const data = await hfResponse.json();
+    const reply = data.choices[0].message.content;
+
+    res.json({ reply });
 
   } catch (error) {
-    console.error("Chat Error:", error);
-    res.status(500).json({ message: 'Error processing chat request', error: error.message });
+    console.error("Chat error:", error);
+    res.status(500).json({ error: "Failed to process chat" });
   }
 });
 
+// route for audio feature
 
+router.post('/generate-script', async (req, res) => {
+  console.log("🟢 1. API HIT: /generate-script started!");
+
+  try {
+    const { notebookId, customPrompt } = req.body;
+
+    if (!notebookId) {
+      return res.status(400).json({ error: "Missing notebookId" });
+    }
+
+    const notebook = await Notebook.findById(notebookId);
+    if (!notebook) {
+      return res.status(404).json({ error: "Notebook not found" });
+    }
+
+    console.log("🟢 4. Notebook found! Sending prompt to Hugging Face...");
+
+    const prompt = customPrompt
+      ? `Write a short, engaging audio script that directly answers this specific question: "${customPrompt}". Base your explanation entirely on the following study material. 
+      
+      CRITICAL INSTRUCTIONS FOR TEXT-TO-SPEECH:
+      - Write ONLY the exact words that will be spoken out loud.
+      - DO NOT include speaker labels (like "Host:").
+      - DO NOT include sound effects, music cues, or stage directions in brackets (like [Intro music]).
+      - DO NOT use markdown formatting like asterisks or bold text.
+      - Keep it conversational and continuous.
+      
+      STUDY MATERIAL:\n${notebook.documents[0].rawText}`
+
+      : `Turn this study material into a friendly, 60-second conversational podcast script that explains the core concepts simply. 
+      
+      CRITICAL INSTRUCTIONS FOR TEXT-TO-SPEECH:
+      - Write ONLY the exact words that will be spoken out loud.
+      - DO NOT include speaker labels (like "Host:").
+      - DO NOT include sound effects, music cues, or stage directions in brackets (like [Intro music]).
+      - DO NOT use markdown formatting like asterisks or bold text.
+      - Keep it conversational and continuous.
+      
+      STUDY MATERIAL:\n${notebook.documents[0].rawText}`;
+
+    // Using Hugging Face's OpenAI-compatible router endpoint
+    const hfResponse = await fetch("https://router.huggingface.co/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.HF_TOKEN}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "meta-llama/Llama-3.1-8B-Instruct", // A fast, excellent model for script writing
+        messages: [
+          { role: "system", content: "You are a friendly podcast host summarizing study materials." },
+          { role: "user", content: prompt }
+        ],
+        max_tokens: 400,
+        temperature: 0.7
+      })
+    });
+
+    if (!hfResponse.ok) {
+      const errorText = await hfResponse.text();
+      console.error("🔴 HF API Error:", errorText);
+      throw new Error("Hugging Face API failed");
+    }
+
+    const data = await hfResponse.json();
+    const script = data.choices[0].message.content;
+
+    console.log("🟢 5. Hugging Face generated the script successfully!");
+    res.status(200).json({ script });
+
+  } catch (error) {
+    console.error("🔴 6. CATCH BLOCK ERROR:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 module.exports = router;
