@@ -14,6 +14,7 @@ const requireAuth = require('../middleware/auth');
 const cloudinary = require('cloudinary').v2;
 const mammoth = require('mammoth');
 const officeParser = require('officeparser');
+// const { google } = require('googleapis');
 
 // cloudinary setup 
 cloudinary.config({
@@ -626,6 +627,32 @@ router.post('/generate-script', async (req, res) => {
   } catch (error) {
     console.error("🔴 6. CATCH BLOCK ERROR:", error.message);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// route for 
+router.post('/get-videos', async (req, res) => {
+  try {
+    const { query } = req.body;
+    const apiKey = process.env.YOUTUBE_API_KEY;
+
+    // Using native fetch to bypass the bulky Google SDK
+    const youtubeUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=6&videoEmbeddable=true&key=${apiKey}`;
+
+    const response = await fetch(youtubeUrl);
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("🔴 YouTube API Error:", data.error.message);
+      return res.status(401).json({ error: data.error.message });
+    }
+
+    console.log("🟢 YouTube videos found successfully!");
+    res.json({ videos: data.items });
+ 
+  } catch (error) {
+    console.error("YouTube API Error:", error);
+    res.status(500).json({ error: "Failed to fetch videos" });
   }
 });
 

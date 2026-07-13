@@ -25,6 +25,10 @@ export default function ChatPage() {
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
+  // Video State
+  const [videos, setVideos] = useState([]);
+  const [isVideoLoading, setIsVideoLoading] = useState(false);
+
   // Fetch the full notebook data (with documents) when the page loads
   useEffect(() => {
     const fetchFullNotebook = async () => {
@@ -40,7 +44,7 @@ export default function ChatPage() {
           setMessages([
             {
               role: "ai",
-              text: `Hi! I'm ready to help you study "${data.notebook.title}". Ask me a question, or switch to the Audio tab to have me generate a custom podcast lesson for you!`,
+              text: `Hi! I'm ready to help you study "${data.notebook.title}". Ask me a question, or switch to the Audio/Video tabs to explore more!`,
             },
           ]);
         }
@@ -55,10 +59,10 @@ export default function ChatPage() {
   // Auto-scroll ONLY the chat container
   useEffect(() => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
     }
   }, [messages]);
-
 
   // ==========================================
   // UNIFIED SUBMIT HANDLER
@@ -74,6 +78,8 @@ export default function ChatPage() {
       await handleChatSubmit(userText);
     } else if (activeTab === "audio") {
       await handleAudioSubmit(userText);
+    } else if (activeTab === "video") {
+      await handleVideoSearch(userText);
     }
   };
 
@@ -95,7 +101,7 @@ export default function ChatPage() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ message: userText }),
-        }
+        },
       );
 
       const data = await response.json();
@@ -126,7 +132,7 @@ export default function ChatPage() {
 
     try {
       const notebookId = notebook._id || notebook.id || id;
-      
+
       const response = await fetch("http://localhost:3000/generate-script", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -141,7 +147,6 @@ export default function ChatPage() {
       const data = await response.json();
       setAudioScript(data.script);
       playBrowserAudio(data.script);
-      
     } catch (error) {
       console.error("Audio generation failed:", error);
       alert("Could not generate custom audio overview.");
@@ -150,10 +155,31 @@ export default function ChatPage() {
     }
   };
 
+  // --- VIDEO LOGIC ---
+  const handleVideoSearch = async (userText = null) => {
+    setIsVideoLoading(true);
+    try {
+      // If the user typed a specific topic, use it. Otherwise, default to notebook title.
+      const queryText = userText ? userText : notebook.title;
+
+      const response = await fetch("http://localhost:3000/get-videos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: queryText }),
+      });
+      const data = await response.json();
+      setVideos(data.videos || []);
+    } catch (err) {
+      alert("Video search failed.");
+    } finally {
+      setIsVideoLoading(false);
+    }
+  };
+
   const playBrowserAudio = (text) => {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    
+
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
     const voices = window.speechSynthesis.getVoices();
@@ -299,7 +325,7 @@ export default function ChatPage() {
       );
     }
 
-    // 3. 📝 Word Document (.docx) HTML Template (The one that works!)
+    // 3. 📝 Word Document (.docx) HTML Template
     if (fileName.endsWith(".docx") || fileName.endsWith(".doc")) {
       return (
         <div style={{ marginTop: "12px" }}>
@@ -319,7 +345,6 @@ export default function ChatPage() {
             }}
             dangerouslySetInnerHTML={{ __html: doc.rawText }}
           />
-
           <style>{`
           .google-doc-preview h1 { font-size: 24px; color: #1a73e8; margin-top: 24px; margin-bottom: 12px; font-weight: 600; border-bottom: 1px solid #e8eaed; padding-bottom: 6px; }
           .google-doc-preview h2 { font-size: 20px; color: #202124; margin-top: 20px; margin-bottom: 10px; font-weight: 600; }
@@ -330,7 +355,6 @@ export default function ChatPage() {
           .google-doc-preview table { width: 100%; border-collapse: collapse; margin: 16px 0; }
           .google-doc-preview td, .google-doc-preview th { padding: 10px; border: 1px solid #e2e8f0; }
         `}</style>
-
           <div style={{ marginTop: "20px", textAlign: "right" }}>
             <a
               href={doc.fileUrl}
@@ -350,7 +374,7 @@ export default function ChatPage() {
       );
     }
 
-    // 4. Smart Plain Text (.txt) & Generic Fallback Reader
+    // 4. Smart Plain Text (.txt)
     if (fileName.endsWith(".txt") || fileName.endsWith(".TXT")) {
       let rawText = doc.rawText || "[No readable text extracted]";
 
@@ -598,7 +622,7 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {/* RIGHT SIDE: */}
+        {/* RIGHT SIDE: TABS AND PANELS */}
         <div
           style={{
             width: "450px",
@@ -609,7 +633,7 @@ export default function ChatPage() {
             flexDirection: "column",
           }}
         >
-          {/* TABS */}
+          {/* TABS MENU */}
           <div
             style={{
               display: "flex",
@@ -617,46 +641,86 @@ export default function ChatPage() {
               backgroundColor: "#f8fafc",
             }}
           >
+            {/* TEXT CHAT TAB */}
             <button
               onClick={() => setActiveTab("chat")}
               style={{
                 flex: 1,
-                padding: "16px",
+                padding: "16px 0",
                 border: "none",
                 backgroundColor: activeTab === "chat" ? "white" : "transparent",
                 color: activeTab === "chat" ? "#6366f1" : "#64748b",
-                borderBottom: activeTab === "chat" ? "2px solid #6366f1" : "2px solid transparent",
+                borderBottom:
+                  activeTab === "chat"
+                    ? "2px solid #6366f1"
+                    : "2px solid transparent",
                 fontWeight: activeTab === "chat" ? "bold" : "normal",
                 cursor: "pointer",
-                fontSize: "15px",
+                fontSize: "14px",
               }}
             >
               💬 Text Chat
             </button>
+
+            {/* AUDIO TAB */}
             <button
               onClick={() => setActiveTab("audio")}
               style={{
                 flex: 1,
-                padding: "16px",
+                padding: "16px 0",
                 border: "none",
-                backgroundColor: activeTab === "audio" ? "white" : "transparent",
+                backgroundColor:
+                  activeTab === "audio" ? "white" : "transparent",
                 color: activeTab === "audio" ? "#6366f1" : "#64748b",
-                borderBottom: activeTab === "audio" ? "2px solid #6366f1" : "2px solid transparent",
+                borderBottom:
+                  activeTab === "audio"
+                    ? "2px solid #6366f1"
+                    : "2px solid transparent",
                 fontWeight: activeTab === "audio" ? "bold" : "normal",
                 cursor: "pointer",
-                fontSize: "15px",
+                fontSize: "14px",
               }}
             >
               🎧 Audio Lesson
             </button>
+
+            {/* VIDEO TAB */}
+            <button
+              onClick={() => setActiveTab("video")}
+              style={{
+                flex: 1,
+                padding: "16px 0",
+                border: "none",
+                backgroundColor:
+                  activeTab === "video" ? "white" : "transparent",
+                color: activeTab === "video" ? "#6366f1" : "#64748b",
+                borderBottom:
+                  activeTab === "video"
+                    ? "2px solid #6366f1"
+                    : "2px solid transparent",
+                fontWeight: activeTab === "video" ? "bold" : "normal",
+                cursor: "pointer",
+                fontSize: "14px",
+              }}
+            >
+              🎥 Video Lessons
+            </button>
           </div>
 
           {/* DYNAMIC CONTENT AREA */}
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }}>
-            
-            {activeTab === "chat" ? (
-              
-              /* --- CHAT UI --- */
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              position: "relative",
+            }}
+          >
+            {/* ==============================================
+                TAB 1: CHAT UI
+                ============================================== */}
+            {activeTab === "chat" && (
               <>
                 <div
                   style={{
@@ -686,12 +750,14 @@ export default function ChatPage() {
                       key={i}
                       style={{
                         display: "flex",
-                        justifyContent: msg.role === "ai" ? "flex-start" : "flex-end",
+                        justifyContent:
+                          msg.role === "ai" ? "flex-start" : "flex-end",
                       }}
                     >
                       <div
                         style={{
-                          backgroundColor: msg.role === "ai" ? "#f8fafc" : "#6366f1",
+                          backgroundColor:
+                            msg.role === "ai" ? "#f8fafc" : "#6366f1",
                           color: msg.role === "ai" ? "#334155" : "#ffffff",
                           padding: "16px",
                           borderRadius:
@@ -701,18 +767,50 @@ export default function ChatPage() {
                           maxWidth: "90%",
                           fontSize: "15px",
                           lineHeight: "1.6",
-                          border: msg.role === "ai" ? "1px solid #e2e8f0" : "none",
+                          border:
+                            msg.role === "ai" ? "1px solid #e2e8f0" : "none",
                           wordBreak: "break-word",
                         }}
                       >
                         {msg.role === "ai" ? (
                           <ReactMarkdown
                             components={{
-                              p: ({ node, ...props }) => <p style={{ margin: "0 0 10px 0" }} {...props} />,
-                              ul: ({ node, ...props }) => <ul style={{ margin: "0 0 10px 20px" }} {...props} />,
-                              ol: ({ node, ...props }) => <ol style={{ margin: "0 0 10px 20px" }} {...props} />,
-                              h3: ({ node, ...props }) => <h3 style={{ margin: "15px 0 10px 0", fontSize: "18px" }} {...props} />,
-                              h4: ({ node, ...props }) => <h4 style={{ margin: "15px 0 10px 0", fontSize: "16px" }} {...props} />,
+                              p: ({ node, ...props }) => (
+                                <p
+                                  style={{ margin: "0 0 10px 0" }}
+                                  {...props}
+                                />
+                              ),
+                              ul: ({ node, ...props }) => (
+                                <ul
+                                  style={{ margin: "0 0 10px 20px" }}
+                                  {...props}
+                                />
+                              ),
+                              ol: ({ node, ...props }) => (
+                                <ol
+                                  style={{ margin: "0 0 10px 20px" }}
+                                  {...props}
+                                />
+                              ),
+                              h3: ({ node, ...props }) => (
+                                <h3
+                                  style={{
+                                    margin: "15px 0 10px 0",
+                                    fontSize: "18px",
+                                  }}
+                                  {...props}
+                                />
+                              ),
+                              h4: ({ node, ...props }) => (
+                                <h4
+                                  style={{
+                                    margin: "15px 0 10px 0",
+                                    fontSize: "16px",
+                                  }}
+                                  {...props}
+                                />
+                              ),
                             }}
                           >
                             {msg.text}
@@ -725,7 +823,9 @@ export default function ChatPage() {
                   ))}
 
                   {isChatLoading && (
-                    <div style={{ display: "flex", justifyContent: "flex-start" }}>
+                    <div
+                      style={{ display: "flex", justifyContent: "flex-start" }}
+                    >
                       <div
                         style={{
                           backgroundColor: "#f8fafc",
@@ -743,27 +843,59 @@ export default function ChatPage() {
                   )}
                 </div>
               </>
-              
-            ) : (
-              
-              /* --- AUDIO UI --- */
-              <div style={{ flex: 1, padding: "20px", overflowY: "auto", textAlign: "center" }}>
-                <h3 style={{ marginTop: "20px", color: "#0f172a" }}>🎧 Custom Audio Overview</h3>
-                <p style={{ color: "#64748b", fontSize: "14px", marginBottom: "30px" }}>
+            )}
+
+            {/* ==============================================
+                TAB 2: AUDIO UI
+                ============================================== */}
+            {activeTab === "audio" && (
+              <div
+                style={{
+                  flex: 1,
+                  padding: "20px",
+                  overflowY: "auto",
+                  textAlign: "center",
+                }}
+              >
+                <h3 style={{ marginTop: "20px", color: "#0f172a" }}>
+                  🎧 Custom Audio Overview
+                </h3>
+                <p
+                  style={{
+                    color: "#64748b",
+                    fontSize: "14px",
+                    marginBottom: "30px",
+                  }}
+                >
                   Ask a question below, or generate a general summary!
                 </p>
 
                 {!audioScript && !isAudioLoading && (
-                  <button 
-                    onClick={() => handleAudioSubmit(null)} 
-                    style={{ backgroundColor: "#2563eb", color: "white", padding: "12px 24px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "bold", width: "100%" }}
+                  <button
+                    onClick={() => handleAudioSubmit(null)}
+                    style={{
+                      backgroundColor: "#2563eb",
+                      color: "white",
+                      padding: "12px 24px",
+                      borderRadius: "8px",
+                      border: "none",
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                      width: "100%",
+                    }}
                   >
                     Generate General Overview
                   </button>
                 )}
 
                 {isAudioLoading && (
-                  <div style={{ margin: "40px 0", color: "#6366f1", fontWeight: "bold" }}>
+                  <div
+                    style={{
+                      margin: "40px 0",
+                      color: "#6366f1",
+                      fontWeight: "bold",
+                    }}
+                  >
                     ⏳ Generating your audio script...
                   </div>
                 )}
@@ -771,28 +903,146 @@ export default function ChatPage() {
                 {audioScript && !isAudioLoading && (
                   <div style={{ textAlign: "left", marginTop: "20px" }}>
                     {isPlaying ? (
-                      <button 
-                        onClick={stopAudio} 
-                        style={{ backgroundColor: "#dc2626", color: "white", padding: "10px 20px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "bold", width: "100%", marginBottom: "20px" }}
+                      <button
+                        onClick={stopAudio}
+                        style={{
+                          backgroundColor: "#dc2626",
+                          color: "white",
+                          padding: "10px 20px",
+                          borderRadius: "8px",
+                          border: "none",
+                          cursor: "pointer",
+                          fontWeight: "bold",
+                          width: "100%",
+                          marginBottom: "20px",
+                        }}
                       >
                         ⏹ Stop Playback
                       </button>
                     ) : (
-                      <button 
-                        onClick={() => playBrowserAudio(audioScript)} 
-                        style={{ backgroundColor: "#16a34a", color: "white", padding: "10px 20px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "bold", width: "100%", marginBottom: "20px" }}
+                      <button
+                        onClick={() => playBrowserAudio(audioScript)}
+                        style={{
+                          backgroundColor: "#16a34a",
+                          color: "white",
+                          padding: "10px 20px",
+                          borderRadius: "8px",
+                          border: "none",
+                          cursor: "pointer",
+                          fontWeight: "bold",
+                          width: "100%",
+                          marginBottom: "20px",
+                        }}
                       >
                         ▶️ Replay Audio
                       </button>
                     )}
-                    <div style={{ backgroundColor: "#f8fafc", padding: "15px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px", lineHeight: "1.6", color: "#334155" }}>
+                    <div
+                      style={{
+                        backgroundColor: "#f8fafc",
+                        padding: "15px",
+                        borderRadius: "8px",
+                        border: "1px solid #e2e8f0",
+                        fontSize: "14px",
+                        lineHeight: "1.6",
+                        color: "#334155",
+                      }}
+                    >
                       <strong>Generated Script:</strong>
                       <p style={{ marginTop: "10px" }}>{audioScript}</p>
                     </div>
                   </div>
                 )}
               </div>
-              
+            )}
+
+            {/* ==============================================
+                TAB 3: VIDEO UI
+                ============================================== */}
+            {activeTab === "video" && (
+              <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
+                <h3
+                  style={{
+                    marginTop: "10px",
+                    color: "#0f172a",
+                    textAlign: "center",
+                  }}
+                >
+                  🎥 Recommended Lessons
+                </h3>
+                <p
+                  style={{
+                    color: "#64748b",
+                    fontSize: "14px",
+                    marginBottom: "30px",
+                    textAlign: "center",
+                  }}
+                >
+                  Search a specific topic below, or click the button to find
+                  general videos!
+                </p>
+
+                {isVideoLoading ? (
+                  <div
+                    style={{
+                      margin: "40px 0",
+                      color: "#6366f1",
+                      fontWeight: "bold",
+                      textAlign: "center",
+                    }}
+                  >
+                    ⏳ Searching YouTube...
+                  </div>
+                ) : videos.length === 0 ? (
+                  <button
+                    onClick={() => handleVideoSearch(null)}
+                    style={{
+                      backgroundColor: "#ef4444",
+                      color: "white",
+                      padding: "12px 24px",
+                      border: "none",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      width: "100%",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Find Videos for "{notebook?.title}"
+                  </button>
+                ) : (
+                  <div
+                    style={{ display: "grid", gap: "20px", marginTop: "10px" }}
+                  >
+                    {videos.map((video) => {
+                      // Safely grab the video ID from the YouTube API response
+                      const videoId = video.id?.videoId || video.id;
+                      if (!videoId) return null; // Skip if no ID is found
+
+                      return (
+                        <div
+                          key={videoId}
+                          style={{
+                            borderRadius: "8px",
+                            overflow: "hidden",
+                            border: "1px solid #e2e8f0",
+                          }}
+                        >
+                          <iframe
+                            width="100%"
+                            height="220"
+                            src={`https://www.youtube.com/embed/${videoId}`}
+                            title="YouTube Video Player"
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            style={{ display: "block" }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
@@ -813,7 +1063,13 @@ export default function ChatPage() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={activeTab === 'chat' ? "Ask a question..." : "What should the audio focus on?"}
+              placeholder={
+                activeTab === "chat"
+                  ? "Ask a question..."
+                  : activeTab === "audio"
+                    ? "What should the audio focus on?"
+                    : "Search for a specific video topic..."
+              }
               style={{
                 flex: 1,
                 padding: "10px 16px",
@@ -825,7 +1081,12 @@ export default function ChatPage() {
             />
             <button
               type="submit"
-              disabled={(activeTab === 'chat' ? isChatLoading : isAudioLoading) || !input.trim()}
+              disabled={
+                (activeTab === "chat" && isChatLoading) ||
+                (activeTab === "audio" && isAudioLoading) ||
+                (activeTab === "video" && isVideoLoading) ||
+                !input.trim()
+              }
               style={{
                 padding: "8px 16px",
                 backgroundColor: "#6366f1",
@@ -836,10 +1097,13 @@ export default function ChatPage() {
                 fontWeight: "600",
               }}
             >
-              {activeTab === 'chat' ? 'Send' : 'Generate'}
+              {activeTab === "video"
+                ? "Search"
+                : activeTab === "chat"
+                  ? "Send"
+                  : "Generate"}
             </button>
           </form>
-
         </div>
       </div>
     </>
