@@ -20,7 +20,8 @@ function useDebounce(value, delay) {
 }
 
 // --- SUB-COMPONENT: NOTEBOOK CARD ---
-const NotebookCard = ({ nb, onInteract, onChatClick }) => {
+// 🟢 FIX 1: We added 'onQuizClick' as a prop so the parent component can handle the navigation
+const NotebookCard = ({ nb, onInteract, onChatClick, onQuizClick }) => {
   // Local state so the heart updates instantly when clicked
   const [likes, setLikes] = useState(nb.likes || 0);
   const [isLiked, setIsLiked] = useState(false);
@@ -73,12 +74,6 @@ const NotebookCard = ({ nb, onInteract, onChatClick }) => {
         </div>
       </div>
 
-      {/* <div className="rnc-media-tags">
-        <span className="rm-tag pdf-tag">PDF</span>
-        <span className="rm-tag audio-tag">AUDIO</span>
-        <span className="rm-tag doc-tag">DOC</span>
-      </div> */}
-
       <div className="rnc-summary-box">
         <div className="rnc-summary-header">
           <span className="rnc-blue-dot"></span>
@@ -95,9 +90,13 @@ const NotebookCard = ({ nb, onInteract, onChatClick }) => {
         <button type="button" className="rnc-action-btn" onClick={onInteract}>
           Audio overview
         </button>
-        <button type="button" className="rnc-action-btn" onClick={onInteract}>
+        
+        {/* 🟢 FIX 2: Replaced the broken navigate code with our new prop. 
+            This safely sends the click up to the main Notebooks component! */}
+        <button type="button" className="rnc-action-btn" onClick={onQuizClick}>
           Take Quiz
         </button>
+        
         <button type="button" className="rnc-action-btn" onClick={onInteract}>
           Save to Profile
         </button>
@@ -157,7 +156,6 @@ const NotebookCard = ({ nb, onInteract, onChatClick }) => {
           </button>
         </div>
 
-        {/* 🔥 Raw ID removed, cleanly showing only the username */}
         <div
           style={{
             display: "flex",
@@ -174,7 +172,6 @@ const NotebookCard = ({ nb, onInteract, onChatClick }) => {
 
 // --- MAIN COMPONENT ---
 export default function Notebooks() {
-  const navigate = useNavigate();
   const [notebooks, setNotebooks] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
@@ -184,6 +181,9 @@ export default function Notebooks() {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const pageRef = useRef(null);
   const gridRef = useRef(null);
+
+  // 🟢 navigate is correctly initialized here, at the top of the main component!
+  const navigate = useNavigate();
 
   // FETCH PUBLIC DATA
   useEffect(() => {
@@ -233,6 +233,7 @@ export default function Notebooks() {
     });
   }, [debouncedSearchQuery, activeFilter, notebooks]);
 
+  // GSAP Animations...
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({
@@ -451,12 +452,20 @@ export default function Notebooks() {
                   key={nb.id}
                   nb={nb}
                   onInteract={() => enforceLogin()}
-                  // 🔥 Send the user to the new page and pass the notebook data in the state
                   onChatClick={() =>
                     enforceLogin(() =>
                       navigate(`/notebook/${nb.id}/study`, {
                         state: { notebook: nb },
                       }),
+                    )
+                  }
+                  // 🟢 FIX 3: Added the onQuizClick prop here! 
+                  // It uses the correct nb.id and enforces login before navigating.
+                  onQuizClick={() =>
+                    enforceLogin(() =>
+                      navigate(`/notebook/${nb.id}/quiz`, {
+                        state: { notebook: nb },
+                      })
                     )
                   }
                 />

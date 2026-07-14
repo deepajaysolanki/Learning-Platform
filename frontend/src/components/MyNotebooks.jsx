@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import "../styles/Notebooks.css";
+import { useNavigate } from "react-router-dom";
 
 export default function MyNotebooks() {
   const [notebooks, setNotebooks] = useState([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
-  const [activeChatNotebook, setActiveChatNotebook] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchMyNotebooks = async () => {
@@ -125,14 +126,18 @@ export default function MyNotebooks() {
                   <button
                     type="button"
                     className="rnc-action-btn"
-                    onClick={() => setActiveChatNotebook(nb)}
+                    onClick={() => navigate(`/notebook/${nb.id}/study`)}
                   >
                     Chat with notes
                   </button>
                   <button type="button" className="rnc-action-btn">
                     Audio overview
                   </button>
-                  <button type="button" className="rnc-action-btn">
+                  <button
+                    type="button"
+                    className="rnc-action-btn"
+                    onClick={() => navigate(`/notebook/${nb.id}/quiz`)}
+                  >
                     Take Quiz
                   </button>
                   <button type="button" className="rnc-action-btn">
@@ -197,11 +202,6 @@ export default function MyNotebooks() {
         </div>
       </div>
 
-      <ChatModal
-        isOpen={!!activeChatNotebook}
-        onClose={() => setActiveChatNotebook(null)}
-        notebook={activeChatNotebook}
-      />
     </>
   );
 }

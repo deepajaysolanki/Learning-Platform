@@ -656,4 +656,79 @@ router.post('/get-videos', async (req, res) => {
   }
 });
 
+// route for generate quize 
+router.post('/notebook/:id/quiz', async (req, res) => {
+  try {
+    const notebookId = req.body.notebookId || req.params.id;
+
+    if (!notebookId) return res.status(400).json({ error: "Missing notebookId" });
+
+    const notebook = await Notebook.findById(notebookId);
+    if (!notebook || !notebook.documents || notebook.documents.length === 0) {
+      return res.status(404).json({ error: "Notebook or documents not found" });
+    }
+
+    const rawText = notebook.documents[0]?.rawText;
+    const documentText = typeof rawText === "string"
+      ? rawText.substring(0, 6000)
+      : JSON.stringify(rawText || "No readable text found in the notebook.");
+
+    const prompt = `
+      You are a strict educational assessor. Generate a 10-question multiple-choice quiz based EXCLUSIVELY on the provided document text.
+      DO NOT use any outside knowledge. If a fact is not in the text, do not ask about it.
+
+      CRITICAL INSTRUCTIONS:
+      - Return ONLY a valid JSON array.
+      - Do not include markdown blocks like \`\`\`json.
+      - Do not include any conversational text like "Here is your quiz".
+      - Use this EXACT structure:
+      [
+        {
+          "question": "What is...?",
+          "options": ["A", "B", "C", "D"],
+          "answerOption": "B",
+          "answer":"This is a..."
+        }
+      ]
+
+      DOCUMENT TEXT:
+      ${documentText}
+    `;
+
+    const hfResponse = await fetch("https://router.huggingface.co/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.HF_TOKEN}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "meta-llama/Llama-3.1-8B-Instruct",
+        messages: [
+          { role: "system", content: "You output only raw, valid JSON arrays. No extra text." },
+          { role: "user", content: prompt }
+        ],
+        max_tokens: 800,
+        temperature: 0.1
+      })
+    });
+
+    if (!hfResponse.ok) throw new Error("Failed to fetch from Hugging Face");
+
+    const data = await hfResponse.json();
+    let aiText = data?.choices?.[0]?.message?.content?.trim() || "";
+
+    aiText = aiText.replace(/```json/gi, "").replace(/```/gi, "").trim();
+
+    const match = aiText.match(/\[[\s\S]*\]/);
+    const cleanText = match ? match[0] : aiText;
+    const quizData = JSON.parse(cleanText);
+
+    res.json({ quiz: Array.isArray(quizData) ? quizData : [] });
+
+  } catch (error) {
+    console.error("🔴 Quiz Generation Error:", error.message);
+    res.status(500).json({ error: "Could not generate quiz. Ensure text is readable." });
+  }
+});
+
 module.exports = router;

@@ -1,19 +1,20 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import "../styles/index.css";
-import App from "../components/App.jsx";
-import Home from "../components/Home.jsx";
-import About from "../components/About.jsx";
-import Navbar from "../components/Navbar.jsx";
-import Footer from "../components/Footer.jsx";
-import Notebooks from "../components/Notebooks.jsx";
+import "../styles/index.css"
+import App from "./App.jsx";
+import Home from "./Home.jsx";
+import About from "./About.jsx";
+import Navbar from "./Navbar.jsx";
+import Footer from "./Footer.jsx";
+import Notebooks from "./Notebooks.jsx";
 import Registration from "./Registration.jsx";
 import Login from "./Login.jsx";
-import MyNotebooks from "../components/MyNotebooks.jsx"
+import MyNotebooks from "./MyNotebooks.jsx"
 import { HelmetProvider } from "react-helmet-async";
 import { GoogleOAuthProvider } from '@react-oauth/google'
-import ChatPage from "../components/ChatPage.jsx";
+import ChatPage from "./ChatPage.jsx";
+import QuizPage from "./QuizPage.jsx";
 
 function MainApp() {
   return (
@@ -27,6 +28,7 @@ function MainApp() {
         <Route path="/login" element={<Login />} />
         <Route path="/my-notebooks" element={<MyNotebooks />} />
         <Route path="/notebook/:id/study" element={<ChatPage />} />
+        <Route path="/notebook/:id/quiz" element={<QuizPage />} />
       </Routes>
       <Footer />
     </>
