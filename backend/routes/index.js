@@ -14,7 +14,6 @@ const requireAuth = require('../middleware/auth');
 const cloudinary = require('cloudinary').v2;
 const mammoth = require('mammoth');
 const officeParser = require('officeparser');
-// const { google } = require('googleapis');
 
 // cloudinary setup 
 cloudinary.config({
@@ -33,9 +32,7 @@ router.post('/register', async function (req, res) {
   try {
     const { fullName, username, email, password } = req.body;
 
-    // Check if the user already exists
     const existingUserEmail = await User.findOne({ "email": email });
-
     if (existingUserEmail) {
       return res.status(400).json({ message: 'User with this email already exists' });
     }
@@ -45,11 +42,9 @@ router.post('/register', async function (req, res) {
       return res.status(400).json({ message: 'User with this username already exists' });
     }
 
-    // Secure the password before saving!
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Create a new user
     const newUser = await User.create({ fullName: fullName || "", username, email, password: hashedPassword });
     res.status(201).json({ message: 'User created successfully', user: newUser });
   } catch (err) {
@@ -62,7 +57,6 @@ router.post('/login', async function (req, res) {
   try {
     const { emailOrUsername, password } = req.body;
 
-    // Find the user by email or username
     const user = await User.findOne({
       $or: [
         { email: emailOrUsername },
@@ -73,13 +67,11 @@ router.post('/login', async function (req, res) {
       return res.status(400).json({ message: 'User not found' });
     }
 
-    // Compare the provided password with the hashed password in the database
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // generate the token after we know the password is correct
     const token = jwt.sign(
       { id: user._id, username: user.username },
       process.env.GOOGLE_CLIENT_SECRET,
@@ -95,12 +87,10 @@ router.post('/login', async function (req, res) {
 // route for google authentication
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// ROUTE 1: The Initial Google Login / Fork in the Road
 router.post('/google', async function (req, res) {
   try {
     const { credential } = req.body;
 
-    // 1. Verify the token with Google's servers
     const ticket = await client.verifyIdToken({
       idToken: credential,
       audience: process.env.GOOGLE_CLIENT_ID,
@@ -108,15 +98,12 @@ router.post('/google', async function (req, res) {
     const payload = ticket.getPayload();
     const { email } = payload;
 
-    // 2. Check if user already exists
     let user = await User.findOne({ email });
 
     if (user) {
-      // ➔ PATH A: User exists! Log them in and give them a token.
       const token = jwt.sign({ id: user._id }, process.env.GOOGLE_CLIENT_SECRET, { expiresIn: '1h' });
       return res.status(200).json({ message: 'Login successful', token });
     } else {
-      // ➔ PATH B: New user! Send them back to React to pick a username.
       return res.status(200).json({
         requireUsername: true,
         email: email
@@ -125,27 +112,23 @@ router.post('/google', async function (req, res) {
   } catch (err) {
     res.status(500).json({ message: 'Google Auth Failed', error: err.message });
   }
-})
+});
 
-// ROUTE 2: Complete the Google Registration
 router.post('/google/complete', async (req, res) => {
   try {
     const { email, username } = req.body;
 
-    // Check if the username they picked is already taken by someone else
     const existingUser = await User.findOne({ username });
     if (existingUser) {
       return res.status(400).json({ message: 'Username is already taken' });
     }
 
-    // Save the new Google user to the database
     const newUser = await User.create({
       email,
       username,
       authProvider: 'google'
     });
 
-    //  Issue their VIP wristband
     const token = jwt.sign({ id: newUser._id }, process.env.GOOGLE_CLIENT_SECRET, { expiresIn: '1h' });
     res.status(201).json({ message: 'Account created successfully', token });
 
@@ -202,26 +185,21 @@ router.post('/workspaces', async function (req, res, next) {
     res.status(200).json({ message: 'Workspace created successfully', workspace });
   } catch (err) {
     return next(err);
-    res.status(500).json({ message: 'Error creating workspace', error: err.message })
   }
-  ;
 });
 
-router.post('/workspaces/:id/ask', async function (req, res,) {
+router.post('/workspaces/:id/ask', async function (req, res) {
   try {
     const workspaceId = req.params.id;
     const userQuestion = req.body.question;
 
-    // find the workspace in database
     const workspace = await workspaceModel.findById(workspaceId);
     if (!workspace || workspace.sources.length === 0) {
       return res.status(404).json({ message: 'Workspace not found or has no sources' });
     }
 
-    // grab the raw text from the sources in the workspace
     const documentText = workspace.sources[0].rawText;
 
-    // craft the prompt for the AI model
     const prompt = `
       You are a helpful study assistant. 
       Base your answer ONLY on the following source text provided by the user. 
@@ -233,23 +211,21 @@ router.post('/workspaces/:id/ask', async function (req, res,) {
       User Question: ${userQuestion}
     `;
 
-    // send the prompt to the AI model
     const response = await ai.models.generateContent({
       model: 'gemini-3.5-flash',
       contents: prompt,
     });
 
-    // return the AI's answer to the user
     res.status(200).json({
       answer: response.text
     });
 
   } catch (err) {
-    res.status(500).json({ message: 'Error processing request', error: err.message })
+    res.status(500).json({ message: 'Error processing request', error: err.message });
   }
-})
+});
 
-// route to ..
+// helper to upload binary to Cloudinary directly
 const uploadToCloudinary = (fileBuffer) => {
   return new Promise((resolve, reject) => {
     cloudinary.uploader.upload_stream({ resource_type: 'auto' }, (error, result) => {
@@ -262,11 +238,9 @@ const uploadToCloudinary = (fileBuffer) => {
 // route for create notebook
 router.post('/createnotebook', requireAuth, upload.array('documents', 10), async (req, res) => {
   try {
-    // Extract the text fields from the request
     const { title, isPublic } = req.body;
     const authorId = req.user.id;
 
-    // Helper function to extract text based on file type
     const extractTextFromBuffer = async (file) => {
       const mime = file.mimetype;
 
@@ -275,22 +249,19 @@ router.post('/createnotebook', requireAuth, upload.array('documents', 10), async
           return file.buffer.toString('utf-8');
         }
 
-        // Extract HTML instead of Raw Text for Word Docs
         if (mime.includes('wordprocessingml.document') || file.originalname.endsWith('.docx')) {
           const result = await mammoth.convertToHtml({ buffer: file.buffer });
-          return result.value; // This returns structured HTML strings like <h2>, <p>, <strong>
+          return result.value;
         }
 
-        // Handle PowerPoint Presentations (.pptx)
-        if (mime.includes('presentationml.presentation') || file.originalname.endsWith('.pptx')) {
+        if (mime.includes('presentationml.presentation') || file.originalname.endsWith('.pptx') || file.originalname.endsWith('.ppt')) {
           let extractedText = await officeParser.parseOffice(file.buffer);
 
-          // Force the object into a string before it hits MongoDB or AI
           if (typeof extractedText !== 'string') {
             if (extractedText && typeof extractedText.toText === 'function') {
-              extractedText = extractedText.toText(); // Uses the object's native text converter!
+              extractedText = extractedText.toText();
             } else {
-              extractedText = JSON.stringify(extractedText); // Ultimate fallback
+              extractedText = JSON.stringify(extractedText);
             }
           }
 
@@ -304,18 +275,15 @@ router.post('/createnotebook', requireAuth, upload.array('documents', 10), async
       }
     };
 
-    // Use Promise.all to upload all files to Cloudinary in parallel
     const processedDocuments = await Promise.all(req.files.map(async (file) => {
       const fileUrl = await uploadToCloudinary(file.buffer);
-
-      // Dynamically extract text based on the file type!
       const extractedText = await extractTextFromBuffer(file);
 
       return {
         fileName: file.originalname,
         fileUrl: fileUrl,
-        fileType: file.mimetype.split('/')[1],
-        rawText: extractedText // No longer a hardcoded placeholder string!
+        fileType: file.mimetype.split('/')[1] || 'raw',
+        rawText: extractedText
       };
     }));
 
@@ -323,11 +291,8 @@ router.post('/createnotebook', requireAuth, upload.array('documents', 10), async
       return res.status(400).json({ message: "You must upload at least one document." });
     }
 
-    // Generate the 2-Line AI Summary
-    // We grab the text from the FIRST document to generate the overview
     let firstDocText = processedDocuments[0].rawText || "No readable text found in the first document.";
 
-    // Force firstDocText to be a string so .substring() never crashes on PPTX objects
     if (typeof firstDocText !== 'string') {
       firstDocText = JSON.stringify(firstDocText);
     }
@@ -341,7 +306,6 @@ router.post('/createnotebook', requireAuth, upload.array('documents', 10), async
       ${firstDocText.substring(0, 6000)}
     `;
 
-    // 🟢 HUGGING FACE ROUTE OVERHAUL
     const hfResponse = await fetch("https://router.huggingface.co/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -360,8 +324,8 @@ router.post('/createnotebook', requireAuth, upload.array('documents', 10), async
             content: summaryPrompt
           }
         ],
-        max_tokens: 150, // Reduced since your prompt specifically asks for a maximum 2-line summary
-        temperature: 0.3  // Lower temperature makes it focus heavily on strict facts
+        max_tokens: 150,
+        temperature: 0.3
       })
     });
 
@@ -372,21 +336,16 @@ router.post('/createnotebook', requireAuth, upload.array('documents', 10), async
     }
 
     const data = await hfResponse.json();
-
-    // 🟢 FIXED: Extract response text into our summary variable
     const aiSummary = data.choices[0].message.content;
-    console.log("🟢 Hugging Face Summary Generated Successfully!");
 
-    // Save everything to MongoDB
     const newNotebook = await Notebook.create({
       title,
       author: authorId,
-      isPublic: isPublic === 'true', // Convert string to boolean
-      aiSummary: aiSummary,          // 🟢 FIXED: Changed from finalSummary to aiSummary
+      isPublic: isPublic === 'true',
+      aiSummary: aiSummary,
       documents: processedDocuments
     });
 
-    // Pull the full author data and format it exactly like the GET route
     const populatedNotebook = await Notebook.findById(newNotebook._id).populate('author', 'username');
 
     const formattedNotebook = {
@@ -395,12 +354,11 @@ router.post('/createnotebook', requireAuth, upload.array('documents', 10), async
       category: "General",
       sources: populatedNotebook.documents.length,
       summary: populatedNotebook.aiSummary,
-      author: `@${populatedNotebook.author.username}`, // Shows username, not ID!
+      author: `@${populatedNotebook.author.username}`,
       likes: 0,
       createdAt: populatedNotebook.createdAt
     };
 
-    // Send success response back to React
     res.status(201).json({
       message: 'Notebook created successfully!',
       notebook: formattedNotebook
@@ -412,15 +370,12 @@ router.post('/createnotebook', requireAuth, upload.array('documents', 10), async
   }
 });
 
-// route to 
 router.get('/createnotebook', async (req, res) => {
   try {
-    // Grab anything that is Public, OR belongs to the specific logged-in user.
     const notebooks = await Notebook.find({ isPublic: true })
       .sort({ createdAt: -1 })
       .populate('author', 'username _id');
 
-    // Format for the React frontend
     const formattedNotebooks = notebooks.map(nb => ({
       id: nb._id,
       title: nb.title,
@@ -438,26 +393,21 @@ router.get('/createnotebook', async (req, res) => {
     console.error("Error fetching notebooks:", error);
     res.status(500).json({ message: 'Error loading the notebook feed.' });
   }
-
 });
 
-// route for like notebook
 router.post('/like/:id', requireAuth, async (req, res) => {
   try {
-    // React will tell us if it wants to 'like' (+1) or 'unlike' (-1)
     const { action } = req.body;
     const mathValue = action === 'unlike' ? -1 : 1;
 
-    // Instantly find the notebook and do the math in one step
     const notebook = await Notebook.findByIdAndUpdate(
       req.params.id,
       { $inc: { likes: mathValue } },
-      { new: true } // This returns the newly updated document
+      { new: true }
     );
 
     if (!notebook) return res.status(404).json({ message: 'Notebook not found' });
 
-    // Send back the new total so React can update the UI
     res.status(200).json({ likes: notebook.likes });
 
   } catch (error) {
@@ -467,7 +417,6 @@ router.post('/like/:id', requireAuth, async (req, res) => {
 
 router.get('/my-notebooks', requireAuth, async (req, res) => {
   try {
-    // Fetch only notebooks where the author is the logged-in user
     const notebooks = await Notebook.find({ author: req.user.id })
       .sort({ createdAt: -1 });
 
@@ -475,7 +424,7 @@ router.get('/my-notebooks', requireAuth, async (req, res) => {
       id: nb._id,
       title: nb.title,
       summary: nb.aiSummary,
-      isPublic: nb.isPublic, // Crucial for filtering
+      isPublic: nb.isPublic,
       likes: nb.likes || 0,
       createdAt: nb.createdAt
     }));
@@ -486,7 +435,6 @@ router.get('/my-notebooks', requireAuth, async (req, res) => {
   }
 });
 
-// GET full details of a single notebook
 router.get('/notebook/:id', async (req, res) => {
   try {
     const notebook = await Notebook.findById(req.params.id);
@@ -500,7 +448,6 @@ router.get('/notebook/:id', async (req, res) => {
   }
 });
 
-// Chat with a specific notebook
 router.post('/notebook/:id/chat', async (req, res) => {
   try {
     const { message } = req.body;
@@ -508,7 +455,6 @@ router.post('/notebook/:id/chat', async (req, res) => {
 
     if (!notebook) return res.status(404).json({ error: "Notebook not found" });
 
-    // Build the context for the AI
     const context = notebook.documents && notebook.documents.length > 0
       ? notebook.documents.map(d => d.rawText).join('\n')
       : (notebook.summary || notebook.aiSummary || "No context available.");
@@ -517,9 +463,8 @@ router.post('/notebook/:id/chat', async (req, res) => {
     Use the following study material context to answer their question accurately:
     
     CONTEXT:
-    ${context.substring(0, 5000)} /* Truncate if necessary to save tokens */`;
+    ${context.substring(0, 5000)}`;
 
-    // Hit the Hugging Face Router
     const hfResponse = await fetch("https://router.huggingface.co/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -533,7 +478,7 @@ router.post('/notebook/:id/chat', async (req, res) => {
           { role: "user", content: message }
         ],
         max_tokens: 800,
-        temperature: 0.5 // Lower temperature for more accurate, factual tutor answers
+        temperature: 0.5
       })
     });
 
@@ -551,8 +496,6 @@ router.post('/notebook/:id/chat', async (req, res) => {
     res.status(500).json({ error: "Failed to process chat" });
   }
 });
-
-// route for audio feature
 
 router.post('/generate-script', async (req, res) => {
   console.log("🟢 1. API HIT: /generate-script started!");
@@ -594,7 +537,6 @@ router.post('/generate-script', async (req, res) => {
       
       STUDY MATERIAL:\n${notebook.documents[0].rawText}`;
 
-    // Using Hugging Face's OpenAI-compatible router endpoint
     const hfResponse = await fetch("https://router.huggingface.co/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -602,7 +544,7 @@ router.post('/generate-script', async (req, res) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "meta-llama/Llama-3.1-8B-Instruct", // A fast, excellent model for script writing
+        model: "meta-llama/Llama-3.1-8B-Instruct",
         messages: [
           { role: "system", content: "You are a friendly podcast host summarizing study materials." },
           { role: "user", content: prompt }
@@ -630,13 +572,11 @@ router.post('/generate-script', async (req, res) => {
   }
 });
 
-// route for 
 router.post('/get-videos', async (req, res) => {
   try {
     const { query } = req.body;
     const apiKey = process.env.YOUTUBE_API_KEY;
 
-    // Using native fetch to bypass the bulky Google SDK
     const youtubeUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=6&videoEmbeddable=true&key=${apiKey}`;
 
     const response = await fetch(youtubeUrl);
@@ -649,14 +589,13 @@ router.post('/get-videos', async (req, res) => {
 
     console.log("🟢 YouTube videos found successfully!");
     res.json({ videos: data.items });
- 
+
   } catch (error) {
     console.error("YouTube API Error:", error);
     res.status(500).json({ error: "Failed to fetch videos" });
   }
 });
 
-// route for generate quize 
 router.post('/notebook/:id/quiz', async (req, res) => {
   try {
     const notebookId = req.body.notebookId || req.params.id;
@@ -731,75 +670,63 @@ router.post('/notebook/:id/quiz', async (req, res) => {
   }
 });
 
-// route for user profile
 router.get('/profile', requireAuth, async (req, res) => {
   try {
-    // Note: requireAuth attaches the user to req.user
-    // If your token payload has the ID as req.user.id, use that below.
     const user = await User.findById(req.user.id).select('-password');
-    
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    
+
     res.json(user);
   } catch (err) {
     res.status(500).json({ message: "Error fetching profile" });
   }
 });
 
-// User Profile (With Uniqueness Check)
 router.put('/profile', requireAuth, async (req, res) => {
   try {
-    const { username, fullName, bio } = req.body; 
-    
-    // Find and update
+    const { username, fullName, bio } = req.body;
+
     const updatedUser = await User.findByIdAndUpdate(
-      req.user.id, 
-      { username, fullName, bio }, // Add your new fields here!
-      { new: true, runValidators: true } 
+      req.user.id,
+      { username, fullName, bio },
+      { new: true, runValidators: true }
     ).select('-password');
 
     res.json(updatedUser);
 
   } catch (err) {
-    // 🟢 Catch MongoDB Duplicate Key Error (Code 11000)
     if (err.code === 11000) {
-      const field = Object.keys(err.keyValue)[0]; // e.g., 'username'
-      return res.status(400).json({ 
-        message: `That ${field} is already taken. Please choose another one.` 
+      const field = Object.keys(err.keyValue)[0];
+      return res.status(400).json({
+        message: `That ${field} is already taken. Please choose another one.`
       });
     }
-    
+
     console.error(err);
     res.status(500).json({ message: "Error updating profile" });
   }
 });
 
-// Change Password Route
 router.put('/profile/password', requireAuth, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    
-    // 1. Find the user
+
     const user = await User.findById(req.user.id);
-    
-    // 2. Security Check: If they signed up with Google, they shouldn't be hitting this route
+
     if (!user.password) {
       return res.status(400).json({ message: "Your account is managed by Google. No password to change." });
     }
 
-    // 3. Verify the current password matches what is in the database
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Incorrect current password." });
     }
 
-    // 4. Hash the new password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-    // 5. Update and save
     user.password = hashedPassword;
     await user.save();
 
@@ -811,21 +738,18 @@ router.put('/profile/password', requireAuth, async (req, res) => {
   }
 });
 
-// DELETE a specific notebook
 router.delete('/notebook/:id', requireAuth, async (req, res) => {
   try {
     const notebookId = req.params.id;
 
-    // We use findOneAndDelete to ensure the user deleting it actually owns it!
-    // NOTE: Change 'userId' to whatever field your Notebook model uses to link to the user (e.g., 'user', 'creator')
-    const deletedNotebook = await Notebook.findOneAndDelete({ 
-      _id: notebookId, 
-      userId: req.user.id 
+    const deletedNotebook = await Notebook.findOneAndDelete({
+      _id: notebookId,
+      userId: req.user.id
     });
 
     if (!deletedNotebook) {
-      return res.status(404).json({ 
-        message: "Notebook not found or you do not have permission to delete it." 
+      return res.status(404).json({
+        message: "Notebook not found or you do not have permission to delete it."
       });
     }
 
@@ -837,13 +761,12 @@ router.delete('/notebook/:id', requireAuth, async (req, res) => {
   }
 });
 
-// PUBLIC ROUTE: Fetch open community notebooks for the landing page marquee
 router.get("/public-notebooks", async (req, res) => {
   try {
     const publicNotebooks = await Notebook.find({ isPublic: true })
-      .populate("author", "username") 
+      .populate("author", "username")
       .limit(10)
-      .sort({ createdAt: -1 }); // Show newest first
+      .sort({ createdAt: -1 });
 
     res.status(200).json(publicNotebooks);
   } catch (error) {

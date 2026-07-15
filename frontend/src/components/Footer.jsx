@@ -1,12 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
 import '../styles/Footer.css';
 
 export default function Footer() {
+  const [adminMessage, setAdminMessage] = useState("");
+  const [status, setStatus] = useState("");
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!adminMessage.trim()) return;
+
+    setStatus("sending");
+
+    try {
+      // 🟢 Hook this up to your backend support/contact endpoint later if you build one
+      // For now, it will simulate a successful transmission to the admin
+      setTimeout(() => {
+        setAdminMessage("");
+        setStatus("success");
+        setTimeout(() => setStatus(""), 3000); // Clear success message after 3 seconds
+      }, 1000);
+    } catch (err) {
+      console.error("Failed to send message to admin:", err);
+      setStatus("error");
+    }
+  };
+
   return (
     <footer className="main-footer">
       <div className="footer-container">
         
-        {/* Left Column: Brand & Newsletter */}
+        {/* Left Column: Brand & Talk to Admin Component */}
         <div className="footer-brand-column">
           <div className="footer-logo">
             <div className="logo-icon-box">
@@ -16,44 +39,75 @@ export default function Footer() {
             </div>
             <span className="logo-text">SmartStudy AI</span>
           </div>
+          
           <p className="footer-tagline">
-            Empowering students worldwide with intelligent, grounded AI learning companions.
+            Empowering students worldwide with intelligent, grounded AI learning companions built around your material.
           </p>
-          <div className="footer-newsletter">
-            <input type="email" placeholder="Enter your email" className="newsletter-input" />
-            <button className="btn-subscribe">Subscribe</button>
+
+          {/* 🟢 NEW: TALK TO ADMIN COMPONENT HUB 🟢 */}
+          <div className="footer-admin-chat" style={{ marginTop: "20px", maxWidth: "320px" }}>
+            <span style={{ fontSize: "12px", fontWeight: "800", color: "#6366f1", letterSpacing: "1px", display: "block", marginBottom: "8px" }}>
+              💬 HAVE QUESTIONS? TALK TO ADMIN
+            </span>
+            <form onSubmit={handleSendMessage} style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <input 
+                  type="text" 
+                  value={adminMessage}
+                  onChange={(e) => setAdminMessage(e.target.value)}
+                  placeholder="Ask admin anything..." 
+                  className="newsletter-input" // Reusing your existing style baseline safely
+                  style={{ flex: 1 }}
+                  disabled={status === "sending"}
+                />
+                <button 
+                  type="submit" 
+                  className="btn-subscribe" // Reusing your premium dark button style baseline safely
+                  style={{ whiteSpace: "nowrap" }}
+                  disabled={status === "sending"}
+                >
+                  {status === "sending" ? "Sending..." : "Send"}
+                </button>
+              </div>
+              
+              {status === "success" && (
+                <span style={{ fontSize: "12px", color: "#22c55e", fontWeight: "600" }}>
+                  🟢 Message sent straight to the admin dashboard!
+                </span>
+              )}
+            </form>
           </div>
         </div>
 
-        {/* Right Column: Multi-column links grid */}
+        {/* Right Column: Restored Multi-Column Grid */}
         <div className="footer-links-grid">
           <div className="links-group">
-            <h4>Product</h4>
+            <h4>Features</h4>
             <ul>
-              <li><a href="#features">Features</a></li>
-              <li><a href="#pricing">Pricing</a></li>
-              <li><a href="#notebooks">Public Notebooks</a></li>
-              <li><a href="#updates">Changelog</a></li>
+              <li><a href="#how-it-works">Contextual Chat</a></li>
+              <li><a href="#how-it-works">Audio Overviews</a></li>
+              <li><a href="#how-it-works">Video Insights</a></li>
+              <li><a href="#how-it-works">Interactive Quizzes</a></li>
             </ul>
           </div>
 
           <div className="links-group">
-            <h4>Resources</h4>
+            <h4>Workflows</h4>
             <ul>
-              <li><a href="#help">Help Center</a></li>
-              <li><a href="#guides">Guides & Tutorials</a></li>
-              <li><a href="#community">Community Discord</a></li>
-              <li><a href="#status">System Status</a></li>
+              <li><a href="#workflows">Deep-Dive Study</a></li>
+              <li><a href="#workflows">Active Commute</a></li>
+              <li><a href="#workflows">Visual Context</a></li>
+              <li><a href="#workflows">Exam Readiness</a></li>
             </ul>
           </div>
 
           <div className="links-group">
-            <h4>Company</h4>
+            <h4>Platform</h4>
             <ul>
-              <li><a href="#about">About Us</a></li>
-              <li><a href="#careers">Careers</a></li>
-              <li><a href="#privacy">Privacy Policy</a></li>
-              <li><a href="#terms">Terms of Service</a></li>
+              <li><a href="#notebooks">Public Marketplace</a></li>
+              <li><a href="/dashboard">User Workspace</a></li>
+              <li><a href="#how-it-works">Supported Uploads</a></li>
+              <li><a href="#cta">Get Started Free</a></li>
             </ul>
           </div>
         </div>
@@ -67,9 +121,9 @@ export default function Footer() {
             © 2026 SmartStudy AI, Inc. All rights reserved.
           </p>
           <div className="footer-socials">
-            <a href="#twitter" aria-label="Twitter" className="social-icon">𝕏</a>
-            <a href="#github" aria-label="GitHub" className="social-icon">🐙</a>
-            <a href="#linkedin" aria-label="LinkedIn" className="social-icon">💼</a>
+            <a href="https://twitter.com" target="_blank" rel="noreferrer" aria-label="Twitter" className="social-icon">𝕏</a>
+            <a href="https://github.com" target="_blank" rel="noreferrer" aria-label="GitHub" className="social-icon">🐙</a>
+            <a href="https://linkedin.com" target="_blank" rel="noreferrer" aria-label="LinkedIn" className="social-icon">💼</a>
           </div>
         </div>
       </div>

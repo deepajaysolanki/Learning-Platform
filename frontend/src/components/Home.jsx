@@ -612,8 +612,9 @@ export default function Home() {
                 fill="none"
                 preserveAspectRatio="none"
               >
+                {/* 3 Input Streaming Lines (Balanced to match 3 left cards) */}
                 <path
-                  d="M 0 35 Q 100 35 200 100"
+                  d="M 0 30 Q 100 30 200 100"
                   stroke="url(#blue-grad)"
                   strokeWidth="2.5"
                   className="streaming-path"
@@ -625,35 +626,36 @@ export default function Home() {
                   className="streaming-path"
                 />
                 <path
-                  d="M 0 165 Q 100 165 200 100"
+                  d="M 0 170 Q 100 170 200 100"
                   stroke="url(#red-grad)"
                   strokeWidth="2.5"
                   className="streaming-path"
                 />
 
+                {/* 4 Output Streaming Lines (Mapped to 4 right cards) */}
                 <path
-                  d="M 200 100 Q 300 25 400 25"
+                  d="M 200 100 Q 300 20 400 20"
                   stroke="url(#blue-grad)"
                   strokeWidth="1.5"
                   strokeDasharray="4 4"
                   className="streaming-path-fast"
                 />
                 <path
-                  d="M 200 100 Q 300 75 400 75"
+                  d="M 200 100 Q 300 70 400 70"
                   stroke="url(#amber-grad)"
                   strokeWidth="1.5"
                   strokeDasharray="4 4"
                   className="streaming-path-fast"
                 />
                 <path
-                  d="M 200 100 Q 300 125 400 125"
+                  d="M 200 100 Q 300 130 400 130"
                   stroke="url(#red-grad)"
                   strokeWidth="1.5"
                   strokeDasharray="4 4"
                   className="streaming-path-fast"
                 />
                 <path
-                  d="M 200 100 Q 300 175 400 170"
+                  d="M 200 100 Q 300 180 400 180"
                   stroke="url(#green-grad)"
                   strokeWidth="1.5"
                   strokeDasharray="4 4"
@@ -920,7 +922,7 @@ export default function Home() {
                         >
                           <button
                             onClick={() =>
-                              (window.location.href = `/notebook/${notebook._id || notebook.id}`)
+                              (window.location.href = `/notebook/${notebook._id || notebook.id}/study`)
                             }
                             style={{
                               flex: 1,
@@ -939,7 +941,7 @@ export default function Home() {
                           </button>
                           <button
                             onClick={() =>
-                              (window.location.href = `/notebook/${notebook._id || notebook.id}?action=quiz`)
+                              (window.location.href = `/notebook/${notebook._id || notebook.id}/quiz`)
                             }
                             style={{
                               flex: 1,
