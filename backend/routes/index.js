@@ -837,4 +837,19 @@ router.delete('/notebook/:id', requireAuth, async (req, res) => {
   }
 });
 
+// PUBLIC ROUTE: Fetch open community notebooks for the landing page marquee
+router.get("/public-notebooks", async (req, res) => {
+  try {
+    const publicNotebooks = await Notebook.find({ isPublic: true })
+      .populate("author", "username") 
+      .limit(10)
+      .sort({ createdAt: -1 }); // Show newest first
+
+    res.status(200).json(publicNotebooks);
+  } catch (error) {
+    console.error("Error fetching homepage public notebooks:", error);
+    res.status(500).json({ message: "Server error gathering public collections." });
+  }
+});
+
 module.exports = router;
