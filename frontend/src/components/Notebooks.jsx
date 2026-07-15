@@ -70,7 +70,7 @@ const NotebookCard = ({ nb, onInteract, onChatClick, onQuizClick }) => {
         </div>
         <div className="rnc-title-group">
           <h3>{nb.title}</h3>
-          <p>{nb.sources} sources</p>
+          {/* <p>{nb.sources} sources</p> */}
         </div>
       </div>
 
@@ -85,11 +85,11 @@ const NotebookCard = ({ nb, onInteract, onChatClick, onQuizClick }) => {
 
       <div className="rnc-actions-grid">
         <button type="button" className="rnc-action-btn" onClick={onChatClick}>
-          Chat with notes
+          Open notebook
         </button>
-        <button type="button" className="rnc-action-btn" onClick={onInteract}>
+        {/* <button type="button" className="rnc-action-btn" onClick={onInteract}>
           Audio overview
-        </button>
+        </button> */}
 
         {/* 🟢 FIX 2: Replaced the broken navigate code with our new prop. 
             This safely sends the click up to the main Notebooks component! */}
@@ -97,9 +97,9 @@ const NotebookCard = ({ nb, onInteract, onChatClick, onQuizClick }) => {
           Take Quiz
         </button>
 
-        <button type="button" className="rnc-action-btn" onClick={onInteract}>
+        {/* <button type="button" className="rnc-action-btn" onClick={onInteract}>
           Save to Profile
-        </button>
+        </button> */}
       </div>
 
       <div className="card-actions-row">
@@ -394,9 +394,9 @@ export default function Notebooks() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <button type="button" className="btn-sort">
+            {/* <button type="button" className="btn-sort">
               Most Liked
-            </button>
+            </button> */}
           </div>
 
           <div className="category-pills">

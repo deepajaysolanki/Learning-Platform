@@ -4,7 +4,7 @@ import { Helmet } from "react-helmet-async";
 
 export default function UserDashboard() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("notebooks");
+  const [activeTab, setActiveTab] = useState("settings");
 
   // --- USER STATES ---
   const [userData, setUserData] = useState(null);
@@ -182,90 +182,95 @@ export default function UserDashboard() {
         />
       </Helmet>
 
-      {/* 🟢 SIDEBAR (NOW STICKY) 🟢 */}
+      {/* 🟢 SIDEBAR 🟢 */}
       <div
         style={{
           width: "250px",
-          backgroundColor: "#ffffff",
+          flexShrink: 0,
           borderRight: "1px solid #e2e8f0",
-          padding: "20px",
-          display: "flex",
-          flexDirection: "column",
-          position: "fixed", // Makes it stick to the top
-          top: 0, // Sticks exactly at the top of the window
-          height: "100vh", // Takes up the full height of the viewport
-          overflowY: "auto", // Allows inner scrolling if the sidebar gets too tall
-          left: 0, // <-- Locked to the left edge
-          bottom: 0, // <-- Stretches to the bottom
-          zIndex: 10,
+          backgroundColor: "#ffffff",
         }}
       >
-        <h2
-          style={{ color: "#0f172a", marginBottom: "40px", fontSize: "20px" }}
-        >
-          Welcome, {userData?.username || "User"}!
-        </h2>
-
-        <nav
+        <div
           style={{
+            width: "250px",
+            backgroundColor: "#ffffff",
+            borderRight: "1px solid #e2e8f0",
+            padding: "20px",
             display: "flex",
             flexDirection: "column",
-            gap: "10px",
-            flex: 1,
+            position: "sticky", // Makes it stick to the top
+            top: 0, // Sticks exactly at the top of the window
+            height: "100vh", // Takes up the full height of the viewport
+            overflowY: "auto", // Allows inner scrolling if the sidebar gets too tall
           }}
         >
-          <button
-            onClick={() => setActiveTab("settings")}
-            style={{
-              padding: "12px 16px",
-              textAlign: "left",
-              borderRadius: "8px",
-              border: "none",
-              cursor: "pointer",
-              fontWeight: "bold",
-              backgroundColor:
-                activeTab === "settings" ? "#eef2ff" : "transparent",
-              color: activeTab === "settings" ? "#6366f1" : "#64748b",
-            }}
+          <h2
+            style={{ color: "#0f172a", marginBottom: "40px", fontSize: "20px" }}
           >
-            ⚙️ Profile Settings
-          </button>
-          <button
-            onClick={() => setActiveTab("notebooks")}
-            style={{
-              padding: "12px 16px",
-              textAlign: "left",
-              borderRadius: "8px",
-              border: "none",
-              cursor: "pointer",
-              fontWeight: "bold",
-              backgroundColor:
-                activeTab === "notebooks" ? "#eef2ff" : "transparent",
-              color: activeTab === "notebooks" ? "#6366f1" : "#64748b",
-            }}
-          >
-            📚 My Notebooks
-          </button>
+            Welcome, {userData?.username || "User"}!
+          </h2>
 
-          <button
-            onClick={handleLogout}
+          <nav
             style={{
-              padding: "12px 16px",
-              textAlign: "left",
-              borderRadius: "8px",
-              border: "none",
-              cursor: "pointer",
-              fontWeight: "bold",
-              backgroundColor: "#fee2e2",
-              color: "#ef4444",
-              marginTop: "50vh",
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px",
+              flex: 1,
             }}
           >
-            🚪 Logout
-          </button>
-        </nav>
+            <button
+              onClick={() => setActiveTab("settings")}
+              style={{
+                padding: "12px 16px",
+                textAlign: "left",
+                borderRadius: "8px",
+                border: "none",
+                cursor: "pointer",
+                fontWeight: "bold",
+                backgroundColor:
+                  activeTab === "settings" ? "#eef2ff" : "transparent",
+                color: activeTab === "settings" ? "#6366f1" : "#64748b",
+              }}
+            >
+              ⚙️ Profile Settings
+            </button>
+            <button
+              onClick={() => setActiveTab("notebooks")}
+              style={{
+                padding: "12px 16px",
+                textAlign: "left",
+                borderRadius: "8px",
+                border: "none",
+                cursor: "pointer",
+                fontWeight: "bold",
+                backgroundColor:
+                  activeTab === "notebooks" ? "#eef2ff" : "transparent",
+                color: activeTab === "notebooks" ? "#6366f1" : "#64748b",
+              }}
+            >
+              📚 My Notebooks
+            </button>
+
+            <button
+              onClick={handleLogout}
+              style={{
+                padding: "12px 16px",
+                textAlign: "left",
+                borderRadius: "8px",
+                border: "none",
+                cursor: "pointer",
+                fontWeight: "bold",
+                backgroundColor: "#fee2e2",
+                color: "#ef4444",
+                marginTop: "45vh",
+              }}
+            >
+              🚪 Logout
+            </button>
+          </nav>
+        </div>
       </div>
-
       {/* MAIN CONTENT AREA */}
       <div style={{ flex: 1, padding: "40px" }}>
         {" "}
@@ -534,56 +539,8 @@ export default function UserDashboard() {
                                   Private
                                 </>
                               )}
-                              <span>•</span>
-                              <span>{notebook.sources || 0} sources</span>
                             </div>
                           </div>
-                        </div>
-
-                        {/* FILE TYPE BADGES */}
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: "8px",
-                            marginTop: "16px",
-                          }}
-                        >
-                          <span
-                            style={{
-                              padding: "4px 8px",
-                              backgroundColor: "#fef2f2",
-                              color: "#ef4444",
-                              borderRadius: "6px",
-                              fontSize: "11px",
-                              fontWeight: "bold",
-                            }}
-                          >
-                            PDF
-                          </span>
-                          <span
-                            style={{
-                              padding: "4px 8px",
-                              backgroundColor: "#fef9c3",
-                              color: "#ca8a04",
-                              borderRadius: "6px",
-                              fontSize: "11px",
-                              fontWeight: "bold",
-                            }}
-                          >
-                            AUDIO
-                          </span>
-                          <span
-                            style={{
-                              padding: "4px 8px",
-                              backgroundColor: "#eff6ff",
-                              color: "#3b82f6",
-                              borderRadius: "6px",
-                              fontSize: "11px",
-                              fontWeight: "bold",
-                            }}
-                          >
-                            DOC
-                          </span>
                         </div>
 
                         {/* SUMMARY BOX */}
@@ -619,7 +576,7 @@ export default function UserDashboard() {
                                 fontSize: "15px",
                               }}
                             >
-                              AI Summary
+                              Summary
                             </span>
                           </div>
                           <p
@@ -648,7 +605,7 @@ export default function UserDashboard() {
                           <button
                             onClick={() =>
                               navigate(
-                                `/notebook/${notebook._id || notebook.id}`,
+                                `/notebook/${notebook._id || notebook.id}/study`,
                               )
                             }
                             style={{
@@ -663,23 +620,14 @@ export default function UserDashboard() {
                               transition: "all 0.2s",
                             }}
                           >
-                            Chat with notes
+                            Open notebook
                           </button>
                           <button
-                            style={{
-                              padding: "12px",
-                              backgroundColor: "white",
-                              border: "1px solid #e2e8f0",
-                              borderRadius: "8px",
-                              color: "#334155",
-                              fontWeight: "500",
-                              cursor: "pointer",
-                              fontSize: "14px",
-                            }}
-                          >
-                            Audio overview
-                          </button>
-                          <button
+                            onClick={() =>
+                              navigate(
+                                `/notebook/${notebook._id || notebook.id}/quiz`,
+                              )
+                            }
                             style={{
                               padding: "12px",
                               backgroundColor: "white",
