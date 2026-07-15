@@ -9,12 +9,6 @@ const Navbar = () => {
   const token = localStorage.getItem("studyAppToken");
   console.log("Token from localStorage:", token); // Debugging line
 
-  // The Logout Function
-  const handleLogout = () => {
-    localStorage.removeItem("studyAppToken"); // Throw away the token
-    window.location.href = "/";
-  };
-
   return (
     <nav className="navbar">
       <div className="nav-container">
@@ -37,7 +31,7 @@ const Navbar = () => {
         <div className="nav-actions">
           {token ? (
             <>
-              <button onClick={handleLogout} className="btn-primary-nav">Logout</button>
+              <Link to="/dashboard" className="btn-primary-nav">Dashboard</Link>
             </>
           ) : (
             <>

@@ -31,7 +31,7 @@ router.get('/', function (req, res, next) {
 // route for registration
 router.post('/register', async function (req, res) {
   try {
-    const { username, email, password } = req.body;
+    const { fullName, username, email, password } = req.body;
 
     // Check if the user already exists
     const existingUserEmail = await User.findOne({ "email": email });
@@ -50,7 +50,7 @@ router.post('/register', async function (req, res) {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     // Create a new user
-    const newUser = await User.create({ username, email, password: hashedPassword });
+    const newUser = await User.create({ fullName: fullName || "", username, email, password: hashedPassword });
     res.status(201).json({ message: 'User created successfully', user: newUser });
   } catch (err) {
     return res.status(500).json({ message: `Error creating user error: ${err.message}` });
@@ -728,6 +728,112 @@ router.post('/notebook/:id/quiz', async (req, res) => {
   } catch (error) {
     console.error("🔴 Quiz Generation Error:", error.message);
     res.status(500).json({ error: "Could not generate quiz. Ensure text is readable." });
+  }
+});
+
+// route for user profile
+router.get('/profile', requireAuth, async (req, res) => {
+  try {
+    // Note: requireAuth attaches the user to req.user
+    // If your token payload has the ID as req.user.id, use that below.
+    const user = await User.findById(req.user.id).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching profile" });
+  }
+});
+
+// User Profile (With Uniqueness Check)
+router.put('/profile', requireAuth, async (req, res) => {
+  try {
+    const { username, fullName, bio } = req.body; 
+    
+    // Find and update
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id, 
+      { username, fullName, bio }, // Add your new fields here!
+      { new: true, runValidators: true } 
+    ).select('-password');
+
+    res.json(updatedUser);
+
+  } catch (err) {
+    // 🟢 Catch MongoDB Duplicate Key Error (Code 11000)
+    if (err.code === 11000) {
+      const field = Object.keys(err.keyValue)[0]; // e.g., 'username'
+      return res.status(400).json({ 
+        message: `That ${field} is already taken. Please choose another one.` 
+      });
+    }
+    
+    console.error(err);
+    res.status(500).json({ message: "Error updating profile" });
+  }
+});
+
+// Change Password Route
+router.put('/profile/password', requireAuth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    
+    // 1. Find the user
+    const user = await User.findById(req.user.id);
+    
+    // 2. Security Check: If they signed up with Google, they shouldn't be hitting this route
+    if (!user.password) {
+      return res.status(400).json({ message: "Your account is managed by Google. No password to change." });
+    }
+
+    // 3. Verify the current password matches what is in the database
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Incorrect current password." });
+    }
+
+    // 4. Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // 5. Update and save
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ message: "Password updated successfully!" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error updating password" });
+  }
+});
+
+// DELETE a specific notebook
+router.delete('/notebook/:id', requireAuth, async (req, res) => {
+  try {
+    const notebookId = req.params.id;
+
+    // We use findOneAndDelete to ensure the user deleting it actually owns it!
+    // NOTE: Change 'userId' to whatever field your Notebook model uses to link to the user (e.g., 'user', 'creator')
+    const deletedNotebook = await Notebook.findOneAndDelete({ 
+      _id: notebookId, 
+      userId: req.user.id 
+    });
+
+    if (!deletedNotebook) {
+      return res.status(404).json({ 
+        message: "Notebook not found or you do not have permission to delete it." 
+      });
+    }
+
+    res.json({ message: "Notebook deleted successfully!" });
+
+  } catch (err) {
+    console.error("Error deleting notebook:", err);
+    res.status(500).json({ message: "Server error while deleting notebook" });
   }
 });
 

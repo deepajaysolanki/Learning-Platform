@@ -1,7 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import "../styles/index.css"
+import "../styles/index.css";
 import App from "./App.jsx";
 import Home from "./Home.jsx";
 import About from "./About.jsx";
@@ -10,11 +10,13 @@ import Footer from "./Footer.jsx";
 import Notebooks from "./Notebooks.jsx";
 import Registration from "./Registration.jsx";
 import Login from "./Login.jsx";
-import MyNotebooks from "./MyNotebooks.jsx"
+import MyNotebooks from "./MyNotebooks.jsx";
 import { HelmetProvider } from "react-helmet-async";
-import { GoogleOAuthProvider } from '@react-oauth/google'
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import ChatPage from "./ChatPage.jsx";
 import QuizPage from "./QuizPage.jsx";
+import ProtectedRoute from "./ProtectedRoute.jsx";
+import UserDashboard from "./UserDashboard.jsx";
 
 function MainApp() {
   return (
@@ -29,12 +31,22 @@ function MainApp() {
         <Route path="/my-notebooks" element={<MyNotebooks />} />
         <Route path="/notebook/:id/study" element={<ChatPage />} />
         <Route path="/notebook/:id/quiz" element={<QuizPage />} />
+        <Route path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <UserDashboard />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
       <Footer />
     </>
   );
 }
-console.log("GOOGLE_CLIENT_ID from env:", import.meta.env.VITE_GOOGLE_CLIENT_ID);
+console.log(
+  "GOOGLE_CLIENT_ID from env:",
+  import.meta.env.VITE_GOOGLE_CLIENT_ID,
+);
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

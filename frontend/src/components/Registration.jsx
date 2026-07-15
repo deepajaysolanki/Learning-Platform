@@ -8,6 +8,7 @@ const Register = () => {
   const pageScopeRef = useRef(null);
 
   // Standard Registration State
+  const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,6 +38,13 @@ const Register = () => {
   // validation function for the registration form
   const validateForm = () => {
     const errors = {};
+
+    // full name validation
+    const fullNameRegex = /^(?=.{3,20}$)([A-Za-z]+(?: [A-Za-z]+)?)$/;
+    if (!fullNameRegex.test(fullName)) {
+      errors.fullName =
+        "Full name must be 3-20 characters, contain letters only, and can include one space.";
+    }
 
     // Username Validation
     const usernameRegex = /^(?=.*[a-zA-Z])[a-zA-Z0-9_]{3,20}$/;
@@ -83,7 +91,7 @@ const Register = () => {
       const response = await fetch("http://localhost:3000/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify({ fullName, username, email, password }),
       });
       const data = await response.json();
 
@@ -185,6 +193,29 @@ const Register = () => {
             <>
               {/* --- STANDARD REGISTRATION FORM --- */}
               <form className="login-form" onSubmit={handleStandardSubmit}>
+                <div className="form-group">
+                  <label htmlFor="fullName">Full Name</label>
+                  <input
+                    type="text"
+                    id="fullName"
+                    name="fullName"
+                    placeholder="Enter your full name"
+                    required
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                  />
+                  {fieldErrors.fullName && (
+                    <span
+                      style={{
+                        color: "red",
+                        fontSize: "12px",
+                        marginTop: "4px",
+                      }}
+                    >
+                      {fieldErrors.fullName}
+                    </span>
+                  )}
+                </div>
                 <div className="form-group">
                   <label htmlFor="username">Username</label>
                   <input
