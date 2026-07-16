@@ -22,6 +22,24 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+async function fixOldNotebookLikes() {
+  try {
+    
+    // Find notebooks where likes is not an array (e.g. a number or undefined)
+    const notebooks = await Notebook.find({});
+    for (let nb of notebooks) {
+      if (!Array.isArray(nb.likes)) {
+        nb.likes = []; // Reset to clean array
+        await nb.save();
+      }
+    }
+    console.log("🟢 All old notebook likes converted to arrays!");
+  } catch (err) {
+    console.error("Migration error:", err);
+  }
+}
+fixOldNotebookLikes();
+
 // -------------------------------------
 router.get('/', function (req, res, next) {
   res.send('Welcome to the Workspace API');
@@ -372,20 +390,50 @@ router.post('/createnotebook', requireAuth, upload.array('documents', 10), async
 
 router.get('/createnotebook', async (req, res) => {
   try {
+    let currentUserId = null;
+    let userSavedIds = [];
+
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.GOOGLE_CLIENT_SECRET);
+        currentUserId = decoded.id;
+
+        const currentUser = await User.findById(currentUserId).select('savedNotebooks');
+        if (currentUser && currentUser.savedNotebooks) {
+          userSavedIds = currentUser.savedNotebooks.map(id => id.toString());
+        }
+      } catch (e) {
+        // Token expired or guest
+      }
+    }
+
+    // 🟢 Fetch notebooks (or remove { isPublic: true } temporarily to test!)
     const notebooks = await Notebook.find({ isPublic: true })
       .sort({ createdAt: -1 })
       .populate('author', 'username _id');
 
-    const formattedNotebooks = notebooks.map(nb => ({
-      id: nb._id,
-      title: nb.title,
-      category: "General",
-      sources: nb.documents.length,
-      summary: nb.aiSummary,
-      author: nb.author ? `@${nb.author.username}` : "@unknown",
-      likes: nb.likes || 0,
-      createdAt: nb.createdAt
-    }));
+    const formattedNotebooks = notebooks.map(nb => {
+      const likesArray = Array.isArray(nb.likes) ? nb.likes : [];
+      const isLikedByMe = currentUserId 
+        ? likesArray.some(userId => userId.toString() === currentUserId.toString())
+        : false;
+      const isSavedByMe = currentUserId ? userSavedIds.includes(nb._id.toString()) : false;
+
+      return {
+        id: nb._id,
+        title: nb.title,
+        category: "General",
+        sources: nb.documents ? nb.documents.length : 0,
+        summary: nb.aiSummary,
+        author: nb.author ? `@${nb.author.username}` : "@unknown",
+        likes: likesArray.length,
+        isLiked: isLikedByMe,
+        isSaved: isSavedByMe,
+        createdAt: nb.createdAt
+      };
+    });
 
     res.status(200).json({ notebooks: formattedNotebooks });
 
@@ -395,22 +443,48 @@ router.get('/createnotebook', async (req, res) => {
   }
 });
 
+// Smart Like Route (Max 1 like per user)
 router.post('/like/:id', requireAuth, async (req, res) => {
   try {
-    const { action } = req.body;
-    const mathValue = action === 'unlike' ? -1 : 1;
+    const notebookId = req.params.id;
+    const userId = req.user.id; // Extracted from requireAuth middleware
 
-    const notebook = await Notebook.findByIdAndUpdate(
-      req.params.id,
-      { $inc: { likes: mathValue } },
-      { new: true }
-    );
+    const notebook = await Notebook.findById(notebookId);
+    if (!notebook) {
+      return res.status(404).json({ message: 'Notebook not found' });
+    }
 
-    if (!notebook) return res.status(404).json({ message: 'Notebook not found' });
+    // Check if user has already liked this notebook
+    const likesArray = Array.isArray(notebook.likes) ? notebook.likes : [];
+    const hasLiked = likesArray.some(id => id.toString() === userId.toString());
 
-    res.status(200).json({ likes: notebook.likes });
+    let updatedNotebook;
+    if (hasLiked) {
+      // User already liked it -> UNLIKE (Remove User ID from array)
+      updatedNotebook = await Notebook.findByIdAndUpdate(
+        notebookId,
+        { $pull: { likes: userId } },
+        { new: true }
+      );
+    } else {
+      // User hasn't liked it -> LIKE (Add User ID safely using $addToSet)
+      updatedNotebook = await Notebook.findByIdAndUpdate(
+        notebookId,
+        { $addToSet: { likes: userId } },
+        { new: true }
+      );
+    }
+
+    const newLikesCount = updatedNotebook.likes ? updatedNotebook.likes.length : 0;
+
+    // Send back both total count and the updated like state for the current user
+    res.status(200).json({
+      likes: newLikesCount,
+      isLiked: !hasLiked
+    });
 
   } catch (error) {
+    console.error("Error toggling like:", error);
     res.status(500).json({ message: 'Error updating like status' });
   }
 });
@@ -772,6 +846,83 @@ router.get("/public-notebooks", async (req, res) => {
   } catch (error) {
     console.error("Error fetching homepage public notebooks:", error);
     res.status(500).json({ message: "Server error gathering public collections." });
+  }
+});
+
+// 🟢 ROUTE 1: Toggle Save / Unsave Notebook
+router.post('/save-notebook/:id', requireAuth, async (req, res) => {
+  try {
+    const notebookId = req.params.id;
+    const userId = req.user.id;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Safely check if notebook is already saved
+    const savedArray = Array.isArray(user.savedNotebooks) ? user.savedNotebooks : [];
+    const isSaved = savedArray.some(id => id.toString() === notebookId.toString());
+
+    let updatedUser;
+    if (isSaved) {
+      // UNSAVE: Remove notebook ID from user's saved array
+      updatedUser = await User.findByIdAndUpdate(
+        userId,
+        { $pull: { savedNotebooks: notebookId } },
+        { new: true }
+      );
+    } else {
+      // SAVE: Add notebook ID to user's saved array
+      updatedUser = await User.findByIdAndUpdate(
+        userId,
+        { $addToSet: { savedNotebooks: notebookId } },
+        { new: true }
+      );
+    }
+
+    res.status(200).json({
+      message: isSaved ? "Notebook removed from saved list" : "Notebook saved successfully!",
+      isSaved: !isSaved
+    });
+
+  } catch (error) {
+    console.error("Error toggling saved notebook:", error);
+    res.status(500).json({ message: "Error updating saved status" });
+  }
+});
+
+// 🟢 ROUTE 2: Fetch Saved Notebooks for Dashboard
+// GET Saved Notebooks for User Dashboard
+router.get('/saved-notebooks', requireAuth, async (req, res) => {
+  try {
+    // Populate full notebook data and author username
+    const user = await User.findById(req.user.id).populate({
+      path: 'savedNotebooks',
+      populate: { path: 'author', select: 'username' }
+    });
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const formattedNotebooks = (user.savedNotebooks || [])
+      .filter(nb => nb !== null) // Filter out any deleted notebooks
+      .map(nb => {
+        const likesArray = Array.isArray(nb.likes) ? nb.likes : [];
+        return {
+          id: nb._id,
+          title: nb.title,
+          summary: nb.aiSummary,
+          author: nb.author ? `@${nb.author.username}` : "@unknown",
+          likes: likesArray.length,
+          isLiked: likesArray.some(uId => uId.toString() === req.user.id.toString()),
+          isSaved: true,
+          createdAt: nb.createdAt
+        };
+      });
+
+    res.status(200).json({ savedNotebooks: formattedNotebooks });
+
+  } catch (error) {
+    console.error("Error fetching saved notebooks:", error);
+    res.status(500).json({ message: "Error loading saved notebooks." });
   }
 });
 

@@ -19,8 +19,7 @@
       fileType: String, // 'pdf', 'text', 'ppt'
       rawText: String // Hidden text extracted for Gemini to read
     }],
-
-    likes: { type: Number, default: 0 }
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: 0 }]
   }, { timestamps: true }); // Automatically handles 'createdAt' and 'updatedAt'
 
   const Notebook = mongoose.model('Notebook', notebookSchema);

@@ -12,10 +12,11 @@ export default function UserDashboard() {
 
   // --- NOTEBOOK STATES ---
   const [myNotebooks, setMyNotebooks] = useState([]);
+  const [savedNotebooks, setSavedNotebooks] = useState([]);
   const [loadingNotebooks, setLoadingNotebooks] = useState(false);
   const [notebookError, setNotebookError] = useState("");
 
-  // --- SEARCH & FILTER STATES (NEW) ---
+  // --- SEARCH & FILTER STATES ---
   const [searchQuery, setSearchQuery] = useState("");
   const [visibilityFilter, setVisibilityFilter] = useState("All Notebooks");
 
@@ -57,7 +58,29 @@ export default function UserDashboard() {
     fetchProfile();
   }, []);
 
-  // --- FETCH NOTEBOOKS ---
+  // --- FETCH SAVED NOTEBOOKS ---
+  useEffect(() => {
+    if (activeTab === "saved") {
+      fetchSavedNotebooks();
+    }
+  }, [activeTab]);
+
+  const fetchSavedNotebooks = async () => {
+    try {
+      const token = localStorage.getItem("studyAppToken");
+      const response = await fetch("http://localhost:3000/saved-notebooks", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setSavedNotebooks(data.savedNotebooks || []);
+      }
+    } catch (err) {
+      console.error("Error fetching saved notebooks", err);
+    }
+  };
+
+  // --- FETCH MY NOTEBOOKS ---
   useEffect(() => {
     if (activeTab === "notebooks") {
       fetchMyNotebooks();
@@ -95,7 +118,7 @@ export default function UserDashboard() {
     }
   };
 
-  // --- DELETE NOTEBOOK ---
+  // --- DELETE MY NOTEBOOK ---
   const handleDeleteNotebook = async (notebookId) => {
     if (
       !window.confirm(
@@ -114,8 +137,8 @@ export default function UserDashboard() {
       });
 
       if (res.ok) {
-        setMyNotebooks((prev) => prev.filter((nb) => nb._id !== notebookId));
-        alert("Notebook deleted succesfully!.");
+        setMyNotebooks((prev) => prev.filter((nb) => (nb._id || nb.id) !== notebookId));
+        alert("Notebook deleted successfully!");
       } else {
         alert("Failed to delete the notebook.");
       }
@@ -124,20 +147,45 @@ export default function UserDashboard() {
     }
   };
 
+  // 🟢 REMOVE FROM SAVED NOTEBOOKS
+  const handleRemoveSavedNotebook = async (notebookId) => {
+    const token = localStorage.getItem("studyAppToken");
+    if (!token) return;
+
+    // Optimistically update the UI instantly
+    setSavedNotebooks((prev) => prev.filter((nb) => (nb.id || nb._id) !== notebookId));
+
+    try {
+      const response = await fetch(`http://localhost:3000/save-notebook/${notebookId}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        // Refetch if backend request failed
+        fetchSavedNotebooks();
+      }
+    } catch (err) {
+      console.error("Failed to remove saved notebook:", err);
+      fetchSavedNotebooks();
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("studyAppToken");
     navigate("/");
   };
 
-  // --- FILTER LOGIC (NEW) ---
+  // --- FILTER LOGIC FOR MY NOTEBOOKS ---
   const filteredNotebooks = Array.isArray(myNotebooks)
     ? myNotebooks.filter((notebook) => {
-        // 1. Search filter
         const matchesSearch = (notebook.title || "Untitled Notebook")
           .toLowerCase()
           .includes(searchQuery.toLowerCase());
 
-        // 2. Visibility filter (Assuming your DB uses notebook.isPublic or visibility === 'public')
         const isPublic = notebook.isPublic || notebook.visibility === "public";
 
         let matchesVisibility = true;
@@ -150,20 +198,18 @@ export default function UserDashboard() {
 
   if (loading) {
     return (
-      <div
-        style={{
-          padding: "40px",
-          textAlign: "center",
-          fontFamily: "sans-serif",
-        }}
-      >
+      <div style={{ padding: "40px", textAlign: "center", fontFamily: "sans-serif" }}>
         Loading your dashboard...
       </div>
     );
   }
 
   const pageTitle =
-    activeTab === "notebooks" ? "My Notebooks" : "Profile Settings";
+    activeTab === "notebooks"
+      ? "My Notebooks"
+      : activeTab === "saved"
+      ? "Saved Notebooks"
+      : "Profile Settings";
 
   return (
     <div
@@ -176,13 +222,10 @@ export default function UserDashboard() {
     >
       <Helmet>
         <title>{pageTitle} | Quizolve</title>
-        <meta
-          name="description"
-          content="Manage your Quizolve account and notebooks."
-        />
+        <meta name="description" content="Manage your Quizolve account and notebooks." />
       </Helmet>
 
-      {/* 🟢 SIDEBAR 🟢 */}
+      {/* SIDEBAR */}
       <div
         style={{
           width: "250px",
@@ -199,26 +242,18 @@ export default function UserDashboard() {
             padding: "20px",
             display: "flex",
             flexDirection: "column",
-            position: "sticky", // Makes it stick to the top
-            top: 0, // Sticks exactly at the top of the window
-            height: "100vh", // Takes up the full height of the viewport
-            overflowY: "auto", // Allows inner scrolling if the sidebar gets too tall
+            position: "sticky",
+            top: 0,
+            height: "100vh",
+            overflowY: "auto",
+            boxSizing: "border-box",
           }}
         >
-          <h2
-            style={{ color: "#0f172a", marginBottom: "40px", fontSize: "20px" }}
-          >
+          <h2 style={{ color: "#0f172a", marginBottom: "40px", fontSize: "20px" }}>
             Welcome, {userData?.username || "User"}!
           </h2>
 
-          <nav
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "10px",
-              flex: 1,
-            }}
-          >
+          <nav style={{ display: "flex", flexDirection: "column", gap: "10px", flex: 1 }}>
             <button
               onClick={() => setActiveTab("settings")}
               style={{
@@ -228,13 +263,13 @@ export default function UserDashboard() {
                 border: "none",
                 cursor: "pointer",
                 fontWeight: "bold",
-                backgroundColor:
-                  activeTab === "settings" ? "#eef2ff" : "transparent",
+                backgroundColor: activeTab === "settings" ? "#eef2ff" : "transparent",
                 color: activeTab === "settings" ? "#6366f1" : "#64748b",
               }}
             >
               ⚙️ Profile Settings
             </button>
+
             <button
               onClick={() => setActiveTab("notebooks")}
               style={{
@@ -244,12 +279,27 @@ export default function UserDashboard() {
                 border: "none",
                 cursor: "pointer",
                 fontWeight: "bold",
-                backgroundColor:
-                  activeTab === "notebooks" ? "#eef2ff" : "transparent",
+                backgroundColor: activeTab === "notebooks" ? "#eef2ff" : "transparent",
                 color: activeTab === "notebooks" ? "#6366f1" : "#64748b",
               }}
             >
               📚 My Notebooks
+            </button>
+
+            <button
+              onClick={() => setActiveTab("saved")}
+              style={{
+                padding: "12px 16px",
+                textAlign: "left",
+                borderRadius: "8px",
+                border: "none",
+                cursor: "pointer",
+                fontWeight: "bold",
+                backgroundColor: activeTab === "saved" ? "#eef2ff" : "transparent",
+                color: activeTab === "saved" ? "#6366f1" : "#64748b",
+              }}
+            >
+              🔖 Saved Notebooks
             </button>
 
             <button
@@ -263,7 +313,7 @@ export default function UserDashboard() {
                 fontWeight: "bold",
                 backgroundColor: "#fee2e2",
                 color: "#ef4444",
-                marginTop: "45vh",
+                marginTop: "auto",
               }}
             >
               🚪 Logout
@@ -271,44 +321,23 @@ export default function UserDashboard() {
           </nav>
         </div>
       </div>
+
       {/* MAIN CONTENT AREA */}
       <div style={{ flex: 1, padding: "40px" }}>
-        {" "}
-        {/* Removed overflowY: auto to allow natural window scroll */}
         <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+          
           {/* TAB 1: MY NOTEBOOKS */}
           {activeTab === "notebooks" && (
             <div>
-              <h1
-                style={{
-                  color: "#0f172a",
-                  marginBottom: "8px",
-                  fontSize: "32px",
-                  fontWeight: "800",
-                }}
-              >
+              <h1 style={{ color: "#0f172a", marginBottom: "8px", fontSize: "32px", fontWeight: "800" }}>
                 My Notebooks
               </h1>
-              <p
-                style={{
-                  color: "#64748b",
-                  marginBottom: "30px",
-                  fontSize: "15px",
-                }}
-              >
+              <p style={{ color: "#64748b", marginBottom: "30px", fontSize: "15px" }}>
                 Manage your private and public collections
               </p>
 
-              {/* 🟢 SEARCH & FILTER ROW (NEW) 🟢 */}
-              <div
-                style={{
-                  display: "flex",
-                  gap: "16px",
-                  marginBottom: "30px",
-                  width: "100%",
-                }}
-              >
-                {/* Search Bar */}
+              {/* SEARCH & FILTER ROW */}
+              <div style={{ display: "flex", gap: "16px", marginBottom: "30px", width: "100%" }}>
                 <div style={{ flex: 1, position: "relative" }}>
                   <svg
                     width="18"
@@ -343,11 +372,11 @@ export default function UserDashboard() {
                       color: "#334155",
                       outline: "none",
                       boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+                      boxSizing: "border-box",
                     }}
                   />
                 </div>
 
-                {/* Dropdown Filter */}
                 <select
                   value={visibilityFilter}
                   onChange={(e) => setVisibilityFilter(e.target.value)}
@@ -371,45 +400,20 @@ export default function UserDashboard() {
               </div>
 
               {notebookError && (
-                <div
-                  style={{
-                    padding: "10px",
-                    backgroundColor: "#fee2e2",
-                    color: "#991b1b",
-                    borderRadius: "6px",
-                    marginBottom: "20px",
-                  }}
-                >
+                <div style={{ padding: "10px", backgroundColor: "#fee2e2", color: "#991b1b", borderRadius: "6px", marginBottom: "20px" }}>
                   ⚠️ {notebookError}
                 </div>
               )}
 
               {loadingNotebooks ? (
-                <div
-                  style={{
-                    textAlign: "center",
-                    padding: "40px",
-                    color: "#6366f1",
-                    fontWeight: "bold",
-                  }}
-                >
+                <div style={{ textAlign: "center", padding: "40px", color: "#6366f1", fontWeight: "bold" }}>
                   ⏳ Loading your notebooks...
                 </div>
               ) : filteredNotebooks.length === 0 ? (
-                <div
-                  style={{
-                    padding: "40px",
-                    backgroundColor: "white",
-                    borderRadius: "12px",
-                    border: "1px dashed #cbd5e1",
-                    textAlign: "center",
-                  }}
-                >
+                <div style={{ padding: "40px", backgroundColor: "white", borderRadius: "12px", border: "1px dashed #cbd5e1", textAlign: "center" }}>
                   <h3 style={{ color: "#334155" }}>No Notebooks Found</h3>
                   <p style={{ color: "#64748b" }}>
-                    {myNotebooks.length === 0
-                      ? "You haven't created any study materials yet."
-                      : "No notebooks match your search."}
+                    {myNotebooks.length === 0 ? "You haven't created any study materials yet." : "No notebooks match your search."}
                   </p>
                   <button
                     onClick={() => navigate("/notebooks")}
@@ -428,18 +432,9 @@ export default function UserDashboard() {
                   </button>
                 </div>
               ) : (
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns:
-                      "repeat(auto-fill, minmax(450px, 1fr))", // Slightly wider cards per your image
-                    gap: "24px",
-                  }}
-                >
-                  {/* Map over filteredNotebooks instead of myNotebooks */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(450px, 1fr))", gap: "24px" }}>
                   {filteredNotebooks.map((notebook, index) => {
-                    const isPublic =
-                      notebook.isPublic || notebook.visibility === "public";
+                    const isPublic = notebook.isPublic || notebook.visibility === "public";
 
                     return (
                       <div
@@ -454,14 +449,7 @@ export default function UserDashboard() {
                           boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
                         }}
                       >
-                        {/* HEADER SECTION */}
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "flex-start",
-                            gap: "16px",
-                          }}
-                        >
+                        <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
                           <div
                             style={{
                               width: "48px",
@@ -474,13 +462,7 @@ export default function UserDashboard() {
                               flexShrink: 0,
                             }}
                           >
-                            <svg
-                              width="22"
-                              height="22"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                               <path
                                 d="M4 19V5C4 3.89543 4.89543 3 6 3H19C19.5523 3 20 3.44772 20 4V20C20 20.5523 19.5523 21 19 21H6C4.89543 21 4 20.1046 4 19ZM4 19C4 20.1046 4.89543 21 6 21H19"
                                 stroke="#3b82f6"
@@ -498,165 +480,52 @@ export default function UserDashboard() {
                             </svg>
                           </div>
                           <div>
-                            <h3
-                              style={{
-                                margin: "0 0 8px 0",
-                                color: "#0f172a",
-                                fontSize: "22px",
-                                fontWeight: "800",
-                                lineHeight: "1.2",
-                              }}
-                            >
+                            <h3 style={{ margin: "0 0 8px 0", color: "#0f172a", fontSize: "22px", fontWeight: "800", lineHeight: "1.2" }}>
                               {notebook.title || "Untitled Notebook"}
                             </h3>
 
-                            {/* Privacy and Sources Tag */}
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "6px",
-                                color: "#64748b",
-                                fontSize: "14px",
-                                fontWeight: "500",
-                              }}
-                            >
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#64748b", fontSize: "14px", fontWeight: "500" }}>
                               {isPublic ? (
                                 <>
-                                  <span
-                                    style={{
-                                      color: "#22c55e",
-                                      fontSize: "10px",
-                                    }}
-                                  >
-                                    🟢
-                                  </span>{" "}
-                                  Public
+                                  <span style={{ color: "#22c55e", fontSize: "10px" }}>🟢</span> Public
                                 </>
                               ) : (
                                 <>
-                                  <span style={{ fontSize: "12px" }}>🔒</span>{" "}
-                                  Private
+                                  <span style={{ fontSize: "12px" }}>🔒</span> Private
                                 </>
                               )}
                             </div>
                           </div>
                         </div>
 
-                        {/* SUMMARY BOX */}
-                        <div
-                          style={{
-                            backgroundColor: "#f8fafc",
-                            borderRadius: "12px",
-                            padding: "20px",
-                            marginTop: "20px",
-                            flex: 1,
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px",
-                              marginBottom: "12px",
-                            }}
-                          >
-                            <div
-                              style={{
-                                width: "6px",
-                                height: "6px",
-                                borderRadius: "50%",
-                                backgroundColor: "#2563eb",
-                              }}
-                            ></div>
-                            <span
-                              style={{
-                                color: "#2563eb",
-                                fontWeight: "bold",
-                                fontSize: "15px",
-                              }}
-                            >
-                              Summary
-                            </span>
+                        <div style={{ backgroundColor: "#f8fafc", borderRadius: "12px", padding: "20px", marginTop: "20px", flex: 1 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                            <div style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#2563eb" }}></div>
+                            <span style={{ color: "#2563eb", fontWeight: "bold", fontSize: "15px" }}>Summary</span>
                           </div>
-                          <p
-                            style={{
-                              margin: 0,
-                              color: "#475569",
-                              fontSize: "15px",
-                              lineHeight: "1.6",
-                            }}
-                          >
-                            {notebook.description ||
-                              notebook.summary ||
-                              "Client-server architecture enables communication between a user's browser and a remote server..."}
+                          <p style={{ margin: 0, color: "#475569", fontSize: "15px", lineHeight: "1.6" }}>
+                            {notebook.description || notebook.summary || "No description provided."}
                           </p>
                         </div>
 
-                        {/* ACTION BUTTONS */}
-                        <div
-                          style={{
-                            display: "grid",
-                            gridTemplateColumns: "1fr 1fr",
-                            gap: "12px",
-                            marginTop: "24px",
-                          }}
-                        >
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginTop: "24px" }}>
                           <button
-                            onClick={() =>
-                              navigate(
-                                `/notebook/${notebook._id || notebook.id}/study`,
-                              )
-                            }
-                            style={{
-                              padding: "12px",
-                              backgroundColor: "white",
-                              border: "1px solid #e2e8f0",
-                              borderRadius: "8px",
-                              color: "#334155",
-                              fontWeight: "500",
-                              cursor: "pointer",
-                              fontSize: "14px",
-                              transition: "all 0.2s",
-                            }}
+                            onClick={() => navigate(`/notebook/${notebook._id || notebook.id}/study`)}
+                            style={{ padding: "12px", backgroundColor: "white", border: "1px solid #e2e8f0", borderRadius: "8px", color: "#334155", fontWeight: "500", cursor: "pointer", fontSize: "14px" }}
                           >
-                            Open notebook
+                            Open
                           </button>
                           <button
-                            onClick={() =>
-                              navigate(
-                                `/notebook/${notebook._id || notebook.id}/quiz`,
-                              )
-                            }
-                            style={{
-                              padding: "12px",
-                              backgroundColor: "white",
-                              border: "1px solid #e2e8f0",
-                              borderRadius: "8px",
-                              color: "#334155",
-                              fontWeight: "500",
-                              cursor: "pointer",
-                              fontSize: "14px",
-                            }}
+                            onClick={() => navigate(`/notebook/${notebook._id || notebook.id}/quiz`)}
+                            style={{ padding: "12px", backgroundColor: "white", border: "1px solid #e2e8f0", borderRadius: "8px", color: "#334155", fontWeight: "500", cursor: "pointer", fontSize: "14px" }}
                           >
-                            Take Quiz
+                            Quiz
                           </button>
                           <button
-                            onClick={() =>
-                              handleDeleteNotebook(notebook._id || notebook.id)
-                            }
-                            style={{
-                              padding: "12px",
-                              backgroundColor: "white",
-                              border: "1px solid #fee2e2",
-                              borderRadius: "8px",
-                              color: "#ef4444",
-                              fontWeight: "500",
-                              cursor: "pointer",
-                              fontSize: "14px",
-                            }}
+                            onClick={() => handleDeleteNotebook(notebook._id || notebook.id)}
+                            style={{ padding: "12px", backgroundColor: "white", border: "1px solid #fee2e2", borderRadius: "8px", color: "#ef4444", fontWeight: "500", cursor: "pointer", fontSize: "14px" }}
                           >
-                            Delete Notebook
+                            Delete
                           </button>
                         </div>
                       </div>
@@ -667,41 +536,131 @@ export default function UserDashboard() {
             </div>
           )}
 
-          {/* TAB 2: PROFILE SETTINGS */}
+          {/* TAB 2: SAVED NOTEBOOKS */}
+          {activeTab === "saved" && (
+            <div>
+              <h1 style={{ color: "#0f172a", marginBottom: "8px", fontSize: "32px", fontWeight: "800" }}>
+                Saved Notebooks
+              </h1>
+              <p style={{ color: "#64748b", marginBottom: "30px", fontSize: "15px" }}>
+                Community notebooks you have bookmarked for study
+              </p>
+
+              {savedNotebooks.length === 0 ? (
+                <div style={{ padding: "40px", backgroundColor: "white", borderRadius: "12px", border: "1px dashed #cbd5e1", textAlign: "center" }}>
+                  <h3 style={{ color: "#334155" }}>No Saved Notebooks</h3>
+                  <p style={{ color: "#64748b" }}>
+                    You haven't bookmarked any public notebooks yet.
+                  </p>
+                  <button
+                    onClick={() => navigate("/notebooks")}
+                    style={{
+                      marginTop: "15px",
+                      padding: "10px 20px",
+                      backgroundColor: "#6366f1",
+                      color: "white",
+                      borderRadius: "8px",
+                      border: "none",
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Browse Community Feed
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(450px, 1fr))", gap: "24px" }}>
+                  {savedNotebooks.map((notebook, index) => (
+                    <div
+                      key={notebook.id || notebook._id || index}
+                      style={{
+                        backgroundColor: "white",
+                        padding: "24px",
+                        borderRadius: "16px",
+                        border: "1px solid #e2e8f0",
+                        display: "flex",
+                        flexDirection: "column",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
+                        <div
+                          style={{
+                            width: "48px",
+                            height: "48px",
+                            borderRadius: "12px",
+                            backgroundColor: "#f0fdf4",
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 style={{ margin: "0 0 8px 0", color: "#0f172a", fontSize: "22px", fontWeight: "800", lineHeight: "1.2" }}>
+                            {notebook.title}
+                          </h3>
+                          <span style={{ fontSize: "14px", color: "#64748b" }}>
+                            By {notebook.author}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div style={{ backgroundColor: "#f8fafc", borderRadius: "12px", padding: "20px", marginTop: "20px", flex: 1 }}>
+                        <span style={{ color: "#2563eb", fontWeight: "bold", fontSize: "14px", display: "block", marginBottom: "8px" }}>
+                          Summary
+                        </span>
+                        <p style={{ margin: 0, color: "#475569", fontSize: "15px", lineHeight: "1.6" }}>
+                          {notebook.summary || "No summary available."}
+                        </p>
+                      </div>
+
+                      {/* 🟢 CARD ACTION FOOTER WITH REMOVE SAVE BUTTON */}
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginTop: "24px" }}>
+                        <button
+                          onClick={() => navigate(`/notebook/${notebook.id || notebook._id}/study`)}
+                          style={{ padding: "12px", backgroundColor: "#2563eb", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
+                        >
+                          Open
+                        </button>
+                        <button
+                          onClick={() => navigate(`/notebook/${notebook.id || notebook._id}/quiz`)}
+                          style={{ padding: "12px", backgroundColor: "white", border: "1px solid #e2e8f0", borderRadius: "8px", color: "#334155", fontWeight: "500", cursor: "pointer", fontSize: "13px" }}
+                        >
+                          Quiz
+                        </button>
+                        <button
+                          onClick={() => handleRemoveSavedNotebook(notebook.id || notebook._id)}
+                          style={{ padding: "12px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", color: "#dc2626", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
+                          title="Remove from saved notebooks"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 3: PROFILE SETTINGS */}
           {activeTab === "settings" && (
             <div>
               <h1 style={{ color: "#0f172a", marginBottom: "20px" }}>
                 Profile Settings
               </h1>
-              {/* ... (Your existing profile settings code remains exactly the same here) ... */}
-              <div
-                style={{
-                  backgroundColor: "white",
-                  padding: "30px",
-                  borderRadius: "12px",
-                  border: "1px solid #e2e8f0",
-                  marginBottom: "24px",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "20px",
-                    marginBottom: "30px",
-                    paddingBottom: "20px",
-                    borderBottom: "1px solid #f1f5f9",
-                  }}
-                >
+              
+              <div style={{ backgroundColor: "white", padding: "30px", borderRadius: "12px", border: "1px solid #e2e8f0", marginBottom: "24px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "20px", marginBottom: "30px", paddingBottom: "20px", borderBottom: "1px solid #f1f5f9" }}>
                   <img
                     src={`https://ui-avatars.com/api/?name=${userData?.fullName || userData?.username || "User"}&background=6366f1&color=fff&size=80&bold=true`}
                     alt="Profile Avatar"
-                    style={{
-                      width: "80px",
-                      height: "80px",
-                      borderRadius: "50%",
-                      border: "2px solid #eef2ff",
-                    }}
+                    style={{ width: "80px", height: "80px", borderRadius: "50%", border: "2px solid #eef2ff" }}
                   />
                   <div>
                     <h2 style={{ margin: "0 0 5px 0", color: "#0f172a" }}>
@@ -740,121 +699,51 @@ export default function UserDashboard() {
                       alert("A network error occurred.");
                     }
                   }}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "20px",
-                  }}
+                  style={{ display: "flex", flexDirection: "column", gap: "20px" }}
                 >
                   <div>
-                    <label
-                      style={{
-                        display: "block",
-                        color: "#64748b",
-                        fontSize: "14px",
-                        marginBottom: "5px",
-                        fontWeight: "bold",
-                      }}
-                    >
+                    <label style={{ display: "block", color: "#64748b", fontSize: "14px", marginBottom: "5px", fontWeight: "bold" }}>
                       Full Name
                     </label>
                     <input
                       type="text"
                       placeholder="e.g. Jane Doe"
                       value={userData?.fullName || ""}
-                      onChange={(e) =>
-                        setUserData({ ...userData, fullName: e.target.value })
-                      }
-                      style={{
-                        width: "100%",
-                        padding: "12px",
-                        borderRadius: "8px",
-                        border: "1px solid #cbd5e1",
-                        fontSize: "15px",
-                      }}
+                      onChange={(e) => setUserData({ ...userData, fullName: e.target.value })}
+                      style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "15px", boxSizing: "border-box" }}
                     />
                   </div>
 
                   <div>
-                    <label
-                      style={{
-                        display: "block",
-                        color: "#64748b",
-                        fontSize: "14px",
-                        marginBottom: "5px",
-                        fontWeight: "bold",
-                      }}
-                    >
+                    <label style={{ display: "block", color: "#64748b", fontSize: "14px", marginBottom: "5px", fontWeight: "bold" }}>
                       Username
                     </label>
                     <input
                       type="text"
                       value={userData?.username || ""}
-                      onChange={(e) =>
-                        setUserData({ ...userData, username: e.target.value })
-                      }
-                      style={{
-                        width: "100%",
-                        padding: "12px",
-                        borderRadius: "8px",
-                        border: "1px solid #cbd5e1",
-                        fontSize: "15px",
-                      }}
+                      onChange={(e) => setUserData({ ...userData, username: e.target.value })}
+                      style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "15px", boxSizing: "border-box" }}
                     />
                   </div>
 
                   <div>
-                    <label
-                      style={{
-                        display: "block",
-                        color: "#64748b",
-                        fontSize: "14px",
-                        marginBottom: "5px",
-                        fontWeight: "bold",
-                      }}
-                    >
+                    <label style={{ display: "block", color: "#64748b", fontSize: "14px", marginBottom: "5px", fontWeight: "bold" }}>
                       Email Address
                     </label>
                     <input
                       type="email"
                       value={userData?.email || ""}
                       disabled
-                      style={{
-                        width: "100%",
-                        padding: "12px",
-                        borderRadius: "8px",
-                        border: "1px solid #e2e8f0",
-                        backgroundColor: "#f8fafc",
-                        color: "#94a3b8",
-                        fontSize: "15px",
-                        cursor: "not-allowed",
-                      }}
+                      style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #e2e8f0", backgroundColor: "#f8fafc", color: "#94a3b8", fontSize: "15px", cursor: "not-allowed", boxSizing: "border-box" }}
                     />
-                    <p
-                      style={{
-                        margin: "5px 0 0 0",
-                        fontSize: "12px",
-                        color: "#94a3b8",
-                      }}
-                    >
+                    <p style={{ margin: "5px 0 0 0", fontSize: "12px", color: "#94a3b8" }}>
                       Emails cannot be changed directly for security reasons.
                     </p>
                   </div>
 
                   <button
                     type="submit"
-                    style={{
-                      padding: "12px 24px",
-                      backgroundColor: "#6366f1",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "8px",
-                      cursor: "pointer",
-                      fontWeight: "bold",
-                      marginTop: "10px",
-                      width: "fit-content",
-                      transition: "background 0.2s",
-                    }}
+                    style={{ padding: "12px 24px", backgroundColor: "#6366f1", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold", marginTop: "10px", width: "fit-content" }}
                   >
                     Save Changes
                   </button>
@@ -862,41 +751,15 @@ export default function UserDashboard() {
               </div>
 
               {/* SECURITY / PASSWORD SECTION */}
-              <div
-                style={{
-                  backgroundColor: "white",
-                  padding: "30px",
-                  borderRadius: "12px",
-                  border: "1px solid #e2e8f0",
-                }}
-              >
+              <div style={{ backgroundColor: "white", padding: "30px", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
                 <h3 style={{ margin: "0 0 20px 0" }}>Security</h3>
 
                 {userData?.googleId ? (
                   <div>
-                    <p
-                      style={{
-                        color: "#64748b",
-                        fontSize: "14px",
-                        marginBottom: "10px",
-                      }}
-                    >
-                      Your account is managed via Google. You do not need a
-                      password.
+                    <p style={{ color: "#64748b", fontSize: "14px", marginBottom: "10px" }}>
+                      Your account is managed via Google. You do not need a password.
                     </p>
-                    <div
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        padding: "8px 12px",
-                        backgroundColor: "#f1f5f9",
-                        borderRadius: "6px",
-                        color: "#475569",
-                        fontWeight: "bold",
-                        fontSize: "14px",
-                      }}
-                    >
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "8px 12px", backgroundColor: "#f1f5f9", borderRadius: "6px", color: "#475569", fontWeight: "bold", fontSize: "14px" }}>
                       <span>🛡️</span> Google Authenticated
                     </div>
                   </div>
@@ -908,202 +771,97 @@ export default function UserDashboard() {
                       setPasswordError("");
                       setPasswordSuccess("");
 
-                      const passwordRegex =
-                        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
+                      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
                       if (!passwordRegex.test(passwordData.newPassword)) {
-                        return setPasswordError(
-                          "Password must be at least 8 characters, with 1 uppercase letter and 1 number.",
-                        );
+                        return setPasswordError("Password must be at least 8 characters, with 1 uppercase letter and 1 number.");
                       }
 
-                      if (
-                        passwordData.newPassword !==
-                        passwordData.confirmPassword
-                      ) {
+                      if (passwordData.newPassword !== passwordData.confirmPassword) {
                         return setPasswordError("New passwords do not match!");
                       }
 
                       const token = localStorage.getItem("studyAppToken");
 
                       try {
-                        const res = await fetch(
-                          "http://localhost:3000/profile/password",
-                          {
-                            method: "PUT",
-                            headers: {
-                              Authorization: `Bearer ${token}`,
-                              "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify({
-                              currentPassword: passwordData.currentPassword,
-                              newPassword: passwordData.newPassword,
-                            }),
+                        const res = await fetch("http://localhost:3000/profile/password", {
+                          method: "PUT",
+                          headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json",
                           },
-                        );
+                          body: JSON.stringify({
+                            currentPassword: passwordData.currentPassword,
+                            newPassword: passwordData.newPassword,
+                          }),
+                        });
 
                         const data = await res.json();
 
                         if (res.ok) {
                           setPasswordSuccess("Password updated successfully!");
-                          setPasswordData({
-                            currentPassword: "",
-                            newPassword: "",
-                            confirmPassword: "",
-                          });
+                          setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
                         } else {
-                          setPasswordError(
-                            data.message || "Failed to update password.",
-                          );
+                          setPasswordError(data.message || "Failed to update password.");
                         }
                       } catch (err) {
-                        setPasswordError(
-                          "Network error occurred. Please try again.",
-                        );
+                        setPasswordError("Network error occurred. Please try again.");
                       }
                     }}
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "15px",
-                    }}
+                    style={{ display: "flex", flexDirection: "column", gap: "15px" }}
                   >
                     {passwordError && (
-                      <div
-                        style={{
-                          padding: "10px",
-                          backgroundColor: "#fee2e2",
-                          color: "#991b1b",
-                          borderRadius: "6px",
-                          fontSize: "14px",
-                          fontWeight: "bold",
-                          border: "1px solid #ef4444",
-                        }}
-                      >
+                      <div style={{ padding: "10px", backgroundColor: "#fee2e2", color: "#991b1b", borderRadius: "6px", fontSize: "14px", fontWeight: "bold", border: "1px solid #ef4444" }}>
                         ⚠️ {passwordError}
                       </div>
                     )}
                     {passwordSuccess && (
-                      <div
-                        style={{
-                          padding: "10px",
-                          backgroundColor: "#dcfce7",
-                          color: "#166534",
-                          borderRadius: "6px",
-                          fontSize: "14px",
-                          fontWeight: "bold",
-                          border: "1px solid #22c55e",
-                        }}
-                      >
+                      <div style={{ padding: "10px", backgroundColor: "#dcfce7", color: "#166534", borderRadius: "6px", fontSize: "14px", fontWeight: "bold", border: "1px solid #22c55e" }}>
                         ✅ {passwordSuccess}
                       </div>
                     )}
 
                     <div>
-                      <label
-                        style={{
-                          display: "block",
-                          color: "#64748b",
-                          fontSize: "14px",
-                          marginBottom: "5px",
-                          fontWeight: "bold",
-                        }}
-                      >
+                      <label style={{ display: "block", color: "#64748b", fontSize: "14px", marginBottom: "5px", fontWeight: "bold" }}>
                         Current Password
                       </label>
                       <input
                         type="password"
                         required
                         value={passwordData.currentPassword}
-                        onChange={(e) =>
-                          setPasswordData({
-                            ...passwordData,
-                            currentPassword: e.target.value,
-                          })
-                        }
-                        style={{
-                          width: "100%",
-                          padding: "12px",
-                          borderRadius: "8px",
-                          border: "1px solid #cbd5e1",
-                        }}
+                        onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                        style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1", boxSizing: "border-box" }}
                       />
                     </div>
 
                     <div>
-                      <label
-                        style={{
-                          display: "block",
-                          color: "#64748b",
-                          fontSize: "14px",
-                          marginBottom: "5px",
-                          fontWeight: "bold",
-                        }}
-                      >
+                      <label style={{ display: "block", color: "#64748b", fontSize: "14px", marginBottom: "5px", fontWeight: "bold" }}>
                         New Password
                       </label>
                       <input
                         type="password"
                         required
                         value={passwordData.newPassword}
-                        onChange={(e) =>
-                          setPasswordData({
-                            ...passwordData,
-                            newPassword: e.target.value,
-                          })
-                        }
-                        style={{
-                          width: "100%",
-                          padding: "12px",
-                          borderRadius: "8px",
-                          border: "1px solid #cbd5e1",
-                        }}
+                        onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                        style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1", boxSizing: "border-box" }}
                       />
                     </div>
 
                     <div>
-                      <label
-                        style={{
-                          display: "block",
-                          color: "#64748b",
-                          fontSize: "14px",
-                          marginBottom: "5px",
-                          fontWeight: "bold",
-                        }}
-                      >
+                      <label style={{ display: "block", color: "#64748b", fontSize: "14px", marginBottom: "5px", fontWeight: "bold" }}>
                         Confirm New Password
                       </label>
                       <input
                         type="password"
                         required
                         value={passwordData.confirmPassword}
-                        onChange={(e) =>
-                          setPasswordData({
-                            ...passwordData,
-                            confirmPassword: e.target.value,
-                          })
-                        }
-                        style={{
-                          width: "100%",
-                          padding: "12px",
-                          borderRadius: "8px",
-                          border: "1px solid #cbd5e1",
-                        }}
+                        onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                        style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1", boxSizing: "border-box" }}
                       />
                     </div>
 
                     <button
                       type="submit"
-                      style={{
-                        padding: "12px 24px",
-                        backgroundColor: "#0f172a",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                        fontWeight: "bold",
-                        marginTop: "10px",
-                        width: "fit-content",
-                      }}
+                      style={{ padding: "12px 24px", backgroundColor: "#0f172a", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold", marginTop: "10px", width: "fit-content" }}
                     >
                       Update Password
                     </button>

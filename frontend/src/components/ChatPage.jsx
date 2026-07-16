@@ -186,11 +186,10 @@ const PresentationSlideDeck = memo(({ rawText }) => {
 });
 
 // ============================================================================
-// 3. PAPER DOCUMENT CANVAS RENDERER (.txt)
+// 3. PAPER DOCUMENT CANVAS RENDERER (.txt) - FULL-WIDTH CLEAN READER
 // ============================================================================
 const PaperTextViewer = memo(({ rawText }) => {
   const content = rawText || "[No text found]";
-  const lines = content.split("\n");
 
   return (
     <div
@@ -198,41 +197,28 @@ const PaperTextViewer = memo(({ rawText }) => {
         height: "100%",
         width: "100%",
         overflowY: "auto",
-        backgroundColor: "#525659",
-        padding: "40px 20px",
+        backgroundColor: "#ffffff", // Pure white full-screen background
+        padding: "40px 60px",
         boxSizing: "border-box",
-        display: "flex",
-        justifyContent: "center",
       }}
     >
       <div
         style={{
-          backgroundColor: "#ffffff",
-          width: "100%",
-          maxWidth: "816px",
-          minHeight: "1056px",
-          padding: "72px 96px",
-          boxSizing: "border-box",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-          borderRadius: "2px",
-          fontFamily: "'Courier New', Courier, monospace, 'Times New Roman'",
-          color: "#1a1a1a",
-          lineHeight: "1.7",
-          fontSize: "14.5px",
+          maxWidth: "900px",
+          margin: "0 auto", // Center text column gracefully
+          fontFamily: "'Inter', system-ui, -apple-system, sans-serif", // Clean modern sans-serif font
+          color: "#0f172a",
+          lineHeight: "1.8",
+          fontSize: "15px",
           whiteSpace: "pre-wrap",
           wordBreak: "break-word",
         }}
       >
-        {lines.map((line, idx) => (
-          <div key={idx} style={{ minHeight: "1.7em" }}>
-            {line}
-          </div>
-        ))}
+        {content}
       </div>
     </div>
   );
 });
-
 // ============================================================================
 // 4. ISOLATED MASTER DOCUMENT ROUTER (Guaranteed No Automatic Downloads)
 // ============================================================================

@@ -1,11 +1,11 @@
 const express = require('express');
-const mongooose = require('mongoose');
+const mongoose = require('mongoose');
 
 require('dotenv').config({ path: '../.env' });
 const uri = process.env.MONGO_URI;
-mongooose.connect(uri);
+mongoose.connect(uri);
 
-const userSchema = new mongooose.Schema({
+const userSchema = new mongoose.Schema({
     fullName: { type: String, default: ""},
     username: {
         type: String,
@@ -25,11 +25,12 @@ const userSchema = new mongooose.Schema({
         type: String,
         default: 'local'
     },
+    savedNotebooks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Notebook' }],
     createdAt: {
         type: Date,
         default: Date.now,
     }
 });
 
-const User = mongooose.model('User', userSchema);
+const User = mongoose.model('User', userSchema);
 module.exports = User;

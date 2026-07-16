@@ -6,8 +6,6 @@ import CreateNotebookModal from "./CreateNotebookModal";
 import ChatPanel from "./ChatPanel";
 import "../styles/Notebooks.css";
 
-// const categories = ["All", "Science", "Programming", "Humanities", "Math", "Language", "Arts"];
-
 const categories = [];
 
 function useDebounce(value, delay) {
@@ -19,26 +17,32 @@ function useDebounce(value, delay) {
   return debouncedValue;
 }
 
-// --- SUB-COMPONENT: NOTEBOOK CARD ---
-// 🟢 FIX 1: We added 'onQuizClick' as a prop so the parent component can handle the navigation
+// ============================================================================
+// SUB-COMPONENT: NOTEBOOK CARD
+// ============================================================================
 const NotebookCard = ({ nb, onInteract, onChatClick, onQuizClick }) => {
-  // Local state so the heart updates instantly when clicked
   const [likes, setLikes] = useState(nb.likes || 0);
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(nb.isLiked || false);
+  const [isSaved, setIsSaved] = useState(nb.isSaved || false);
 
+  // Sync state when props update
+  useEffect(() => {
+    setLikes(nb.likes || 0);
+    setIsLiked(nb.isLiked || false);
+    setIsSaved(nb.isSaved || false);
+  }, [nb.likes, nb.isLiked, nb.isSaved]);
+
+  // Handle Like Button Toggle
   const handleLikeClick = async (e) => {
     e.stopPropagation();
 
     const token = localStorage.getItem("studyAppToken");
     if (!token) {
-      onInteract(); // Triggers your login warning for guests
+      onInteract();
       return;
     }
 
-    // Figure out the math we want the server to do
-    const actionToSend = isLiked ? "unlike" : "like";
-
-    // Optimistic UI: Update screen instantly
+    // Optimistic UI update
     setLikes((prev) => (isLiked ? prev - 1 : prev + 1));
     setIsLiked(!isLiked);
 
@@ -49,16 +53,55 @@ const NotebookCard = ({ nb, onInteract, onChatClick, onQuizClick }) => {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ action: actionToSend }),
       });
 
       const data = await response.json();
-
       if (response.ok) {
         setLikes(data.likes);
+        setIsLiked(data.isLiked);
+      } else {
+        // Rollback optimistic update on error
+        setLikes(nb.likes || 0);
+        setIsLiked(nb.isLiked || false);
       }
     } catch (err) {
-      console.error("Failed to like notebook");
+      console.error("Failed to like notebook:", err);
+      setLikes(nb.likes || 0);
+      setIsLiked(nb.isLiked || false);
+    }
+  };
+
+  // Handle Save / Bookmark Button Toggle
+  const handleSaveClick = async (e) => {
+    e.stopPropagation();
+
+    const token = localStorage.getItem("studyAppToken");
+    if (!token) {
+      onInteract();
+      return;
+    }
+
+    // Optimistic UI update
+    setIsSaved(!isSaved);
+
+    try {
+      const response = await fetch(`http://localhost:3000/save-notebook/${nb.id}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setIsSaved(data.isSaved);
+      } else {
+        setIsSaved(nb.isSaved || false);
+      }
+    } catch (err) {
+      console.error("Failed to save notebook:", err);
+      setIsSaved(nb.isSaved || false);
     }
   };
 
@@ -70,7 +113,6 @@ const NotebookCard = ({ nb, onInteract, onChatClick, onQuizClick }) => {
         </div>
         <div className="rnc-title-group">
           <h3>{nb.title}</h3>
-          {/* <p>{nb.sources} sources</p> */}
         </div>
       </div>
 
@@ -79,7 +121,6 @@ const NotebookCard = ({ nb, onInteract, onChatClick, onQuizClick }) => {
           <span className="rnc-blue-dot"></span>
           <h4>Summary</h4>
         </div>
-        {/* AI Summary renders here */}
         <p>{nb.summary}</p>
       </div>
 
@@ -87,58 +128,73 @@ const NotebookCard = ({ nb, onInteract, onChatClick, onQuizClick }) => {
         <button type="button" className="rnc-action-btn" onClick={onChatClick}>
           Open notebook
         </button>
-        {/* <button type="button" className="rnc-action-btn" onClick={onInteract}>
-          Audio overview
-        </button> */}
-
-        {/* 🟢 FIX 2: Replaced the broken navigate code with our new prop. 
-            This safely sends the click up to the main Notebooks component! */}
         <button type="button" className="rnc-action-btn" onClick={onQuizClick}>
           Take Quiz
         </button>
-
-        {/* <button type="button" className="rnc-action-btn" onClick={onInteract}>
-          Save to Profile
-        </button> */}
       </div>
 
       <div className="card-actions-row">
-        <div className="interaction-group">
-          {/* 🔥 Fully functional Like Button
+        <div className="interaction-group" style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          {/* Like Button */}
           <button
             type="button"
             className="action-icon-btn like-btn"
             aria-label="Like"
             onClick={handleLikeClick}
-            >
+          >
             <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
               fill={isLiked ? "#ff4757" : "none"}
               stroke={isLiked ? "#ff4757" : "currentColor"}
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              >
+            >
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-              </svg>
-              <span
-              className="like-count"
-              style={{ color: isLiked ? "#ff4757" : "inherit" }}
-              >
+            </svg>
+            <span className="like-count" style={{ color: isLiked ? "#ff4757" : "inherit" }}>
               {likes}
-              </span>
-              </button> */}
+            </span>
+          </button>
+
+          {/* Save / Bookmark Button */}
+          <button
+            type="button"
+            className="action-icon-btn save-btn"
+            aria-label="Save Notebook"
+            title={isSaved ? "Saved to Dashboard" : "Save Notebook"}
+            onClick={handleSaveClick}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              color: isSaved ? "#2563eb" : "#64748b"
+            }}
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill={isSaved ? "#2563eb" : "none"}
+              stroke={isSaved ? "#2563eb" : "currentColor"}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span style={{ fontSize: "13px", fontWeight: "600" }}>
+              {isSaved ? "Saved" : "Save"}
+            </span>
+          </button>
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-end",
-          }}
-        >
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
           <span className="creator-username">{nb.author}</span>
         </div>
       </div>
@@ -146,7 +202,9 @@ const NotebookCard = ({ nb, onInteract, onChatClick, onQuizClick }) => {
   );
 };
 
-// --- MAIN COMPONENT ---
+// ============================================================================
+// MAIN COMPONENT: NOTEBOOKS
+// ============================================================================
 export default function Notebooks() {
   const [notebooks, setNotebooks] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -157,16 +215,18 @@ export default function Notebooks() {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const pageRef = useRef(null);
   const gridRef = useRef(null);
-
-  // 🟢 navigate is correctly initialized here, at the top of the main component!
   const navigate = useNavigate();
 
-  // FETCH PUBLIC DATA
+  // Fetch Public Feed with Auth Header
   useEffect(() => {
     const fetchNotebooks = async () => {
       try {
+        const token = localStorage.getItem("studyAppToken");
         const response = await fetch("http://localhost:3000/createnotebook", {
           method: "GET",
+          headers: {
+            Authorization: token ? `Bearer ${token}` : "",
+          },
         });
 
         const data = await response.json();
@@ -184,7 +244,7 @@ export default function Notebooks() {
     fetchNotebooks();
   }, []);
 
-  // THE AUTH GUARD FUNCTION
+  // Auth Protection Guard
   const enforceLogin = (actionCallback) => {
     const token = localStorage.getItem("studyAppToken");
     if (!token) {
@@ -194,6 +254,7 @@ export default function Notebooks() {
     if (actionCallback) actionCallback();
   };
 
+  // Search & Filter Memoization
   const filteredNotebooks = useMemo(() => {
     return notebooks.filter((nb) => {
       const matchesFilter =
@@ -209,7 +270,7 @@ export default function Notebooks() {
     });
   }, [debouncedSearchQuery, activeFilter, notebooks]);
 
-  // GSAP Animations...
+  // GSAP Animations
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({
@@ -261,6 +322,7 @@ export default function Notebooks() {
     }
   }, [filteredNotebooks]);
 
+  // Active Chat State Screen Overlay
   if (activeChatNotebook) {
     return (
       <div
@@ -272,7 +334,6 @@ export default function Notebooks() {
           backgroundColor: "#f8fafc",
         }}
       >
-        {/* LEFT SIDE: The Document */}
         <div style={{ flex: 1, padding: "40px", overflowY: "auto" }}>
           <button
             onClick={() => setActiveChatNotebook(null)}
@@ -289,18 +350,11 @@ export default function Notebooks() {
             ← Back to Notebooks
           </button>
 
-          <h1
-            style={{
-              fontSize: "2.5rem",
-              marginBottom: "10px",
-              color: "#0f172a",
-            }}
-          >
+          <h1 style={{ fontSize: "2.5rem", marginBottom: "10px", color: "#0f172a" }}>
             {activeChatNotebook.title}
           </h1>
           <p style={{ color: "#64748b", marginBottom: "30px" }}>
-            Created by {activeChatNotebook.author} •{" "}
-            {activeChatNotebook.sources} Sources
+            Created by {activeChatNotebook.author} • {activeChatNotebook.sources} Sources
           </p>
 
           <div
@@ -335,7 +389,6 @@ export default function Notebooks() {
           </div>
         </div>
 
-        {/* RIGHT SIDE: The AI Chat */}
         <div
           style={{
             width: "400px",
@@ -395,9 +448,6 @@ export default function Notebooks() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            {/* <button type="button" className="btn-sort">
-              Most Liked
-            </button> */}
           </div>
 
           <div className="category-pills">
@@ -435,8 +485,6 @@ export default function Notebooks() {
                       }),
                     )
                   }
-                  // Added the onQuizClick prop here!
-                  // It uses the correct nb.id and enforces login before navigating.
                   onQuizClick={() =>
                     enforceLogin(() =>
                       navigate(`/notebook/${nb.id}/quiz`, {
