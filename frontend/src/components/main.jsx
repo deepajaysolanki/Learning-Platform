@@ -17,6 +17,7 @@ import ChatPage from "./ChatPage.jsx";
 import QuizPage from "./QuizPage.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import UserDashboard from "./UserDashboard.jsx";
+import AdminDashboard from "./AdminDashboard.jsx";
 
 function MainApp() {
   return (
@@ -38,6 +39,7 @@ function MainApp() {
             </ProtectedRoute>
           }
         />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
       </Routes>
       <Footer />
     </>

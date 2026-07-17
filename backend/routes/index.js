@@ -3,7 +3,7 @@ var router = express.Router();
 const workspaceModel = require('../models/workspace');
 const multer = require('multer');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+require('dotenv').config({ path: path.join(__dirname, '../../.env') }); 
 const User = require('../models/Users');
 const bcrypt = require('bcrypt');
 const upload = multer({ storage: multer.memoryStorage() });
@@ -14,6 +14,7 @@ const requireAuth = require('../middleware/auth');
 const cloudinary = require('cloudinary').v2;
 const mammoth = require('mammoth');
 const officeParser = require('officeparser');
+const Message = require('../models/Message');
 
 // cloudinary setup 
 cloudinary.config({
@@ -494,14 +495,19 @@ router.get('/my-notebooks', requireAuth, async (req, res) => {
     const notebooks = await Notebook.find({ author: req.user.id })
       .sort({ createdAt: -1 });
 
-    const formattedNotebooks = notebooks.map(nb => ({
-      id: nb._id,
-      title: nb.title,
-      summary: nb.aiSummary,
-      isPublic: nb.isPublic,
-      likes: nb.likes || 0,
-      createdAt: nb.createdAt
-    }));
+    const formattedNotebooks = notebooks.map(nb => {
+      const likesArray = Array.isArray(nb.likes) ? nb.likes : [];
+      return {
+        id: nb._id,
+        _id: nb._id,
+        title: nb.title,
+        summary: nb.aiSummary,
+        isPublic: nb.isPublic,
+        likes: likesArray.length,
+        isLiked: likesArray.some(uId => uId.toString() === req.user.id.toString()), // 🟢 Sends user's like state
+        createdAt: nb.createdAt
+      };
+    });
 
     res.status(200).json({ notebooks: formattedNotebooks });
   } catch (error) {
@@ -747,14 +753,9 @@ router.post('/notebook/:id/quiz', async (req, res) => {
 router.get('/profile', requireAuth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.json(user);
+    res.status(200).json(user); // Now includes role: "admin" or "user"
   } catch (err) {
-    res.status(500).json({ message: "Error fetching profile" });
+    res.status(500).json({ message: 'Error fetching profile' });
   }
 });
 
@@ -923,6 +924,48 @@ router.get('/saved-notebooks', requireAuth, async (req, res) => {
   } catch (error) {
     console.error("Error fetching saved notebooks:", error);
     res.status(500).json({ message: "Error loading saved notebooks." });
+  }
+});
+
+// POST /contact - Single field contact endpoint
+router.post('/contact', async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({ message: 'Message cannot be empty.' });
+    }
+
+    let senderName = "Guest User";
+    let senderEmail = "Not Logged In";
+
+    // 🟢 Extract user details automatically if token is provided
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.GOOGLE_CLIENT_SECRET);
+        const user = await User.findById(decoded.id).select('username email');
+        if (user) {
+          senderName = user.username;
+          senderEmail = user.email;
+        }
+      } catch (err) {
+        // Token invalid/expired - continue as Guest
+      }
+    }
+
+    // Save message to DB
+    await Message.create({
+      name: senderName,
+      email: senderEmail,
+      subject: "Footer Quick Message",
+      message: message.trim(),
+    });
+
+    res.status(200).json({ message: "Message sent to admin!" });
+  } catch (err) {
+    res.status(500).json({ message: "Error sending message", error: err.message });
   }
 });
 

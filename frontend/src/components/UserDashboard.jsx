@@ -2,6 +2,87 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 
+// 🟢 REUSABLE INTERACTIVE LIKE BUTTON FOR DASHBOARD
+const DashLikeButton = ({ notebookId, initialLikes, initialIsLiked }) => {
+  const [likes, setLikes] = useState(initialLikes || 0);
+  const [isLiked, setIsLiked] = useState(initialIsLiked || false);
+
+  useEffect(() => {
+    setLikes(initialLikes || 0);
+    setIsLiked(initialIsLiked || false);
+  }, [initialLikes, initialIsLiked]);
+
+  const handleToggleLike = async (e) => {
+    e.stopPropagation();
+    const token = localStorage.getItem("studyAppToken");
+    if (!token) return;
+
+    // Optimistic Update
+    setLikes((prev) => (isLiked ? prev - 1 : prev + 1));
+    setIsLiked(!isLiked);
+
+    try {
+      const response = await fetch(`http://localhost:3000/like/${notebookId}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setLikes(data.likes);
+        setIsLiked(data.isLiked);
+      } else {
+        // Rollback on error
+        setLikes(initialLikes || 0);
+        setIsLiked(initialIsLiked || false);
+      }
+    } catch (err) {
+      console.error("Failed to toggle like:", err);
+      setLikes(initialLikes || 0);
+      setIsLiked(initialIsLiked || false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleToggleLike}
+      title={isLiked ? "Unlike Notebook" : "Like Notebook"}
+      style={{
+        background: "none",
+        border: "none",
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        gap: "6px",
+        color: isLiked ? "#ff4757" : "#64748b",
+        fontSize: "14px",
+        fontWeight: "600",
+        padding: "4px 8px",
+        borderRadius: "6px",
+        transition: "all 0.15s ease",
+      }}
+    >
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill={isLiked ? "#ff4757" : "none"}
+        stroke={isLiked ? "#ff4757" : "currentColor"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+      </svg>
+      <span>{likes}</span>
+    </button>
+  );
+};
+
 export default function UserDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("settings");
@@ -122,7 +203,7 @@ export default function UserDashboard() {
   const handleDeleteNotebook = async (notebookId) => {
     if (
       !window.confirm(
-        "Are you sure you want to delete this notebook? This cannot be undone.",
+        "Are you sure you want to delete this notebook? This cannot be undone."
       )
     )
       return;
@@ -147,12 +228,11 @@ export default function UserDashboard() {
     }
   };
 
-  // 🟢 REMOVE FROM SAVED NOTEBOOKS
+  // --- REMOVE FROM SAVED NOTEBOOKS ---
   const handleRemoveSavedNotebook = async (notebookId) => {
     const token = localStorage.getItem("studyAppToken");
     if (!token) return;
 
-    // Optimistically update the UI instantly
     setSavedNotebooks((prev) => prev.filter((nb) => (nb.id || nb._id) !== notebookId));
 
     try {
@@ -165,7 +245,6 @@ export default function UserDashboard() {
       });
 
       if (!response.ok) {
-        // Refetch if backend request failed
         fetchSavedNotebooks();
       }
     } catch (err) {
@@ -225,7 +304,7 @@ export default function UserDashboard() {
         <meta name="description" content="Manage your Quizolve account and notebooks." />
       </Helmet>
 
-      {/* SIDEBAR */}
+      {/* 🟢 SIDEBAR 🟢 */}
       <div
         style={{
           width: "250px",
@@ -302,6 +381,26 @@ export default function UserDashboard() {
               🔖 Saved Notebooks
             </button>
 
+            {/* 🟢 ADMIN PANEL LINK (Appears only if user is Admin) */}
+            {userData?.role === "admin" && (
+              <button
+                onClick={() => navigate("/admin/dashboard")}
+                style={{
+                  padding: "12px 16px",
+                  textAlign: "left",
+                  borderRadius: "8px",
+                  border: "none",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  backgroundColor: "#0f172a",
+                  color: "#38bdf8",
+                  marginTop: "10px",
+                }}
+              >
+                🛡️ Admin Panel
+              </button>
+            )}
+
             <button
               onClick={handleLogout}
               style={{
@@ -313,7 +412,7 @@ export default function UserDashboard() {
                 fontWeight: "bold",
                 backgroundColor: "#fee2e2",
                 color: "#ef4444",
-                marginTop: "auto",
+                marginTop: "45vh",
               }}
             >
               🚪 Logout
@@ -435,10 +534,11 @@ export default function UserDashboard() {
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(450px, 1fr))", gap: "24px" }}>
                   {filteredNotebooks.map((notebook, index) => {
                     const isPublic = notebook.isPublic || notebook.visibility === "public";
+                    const notebookId = notebook._id || notebook.id;
 
                     return (
                       <div
-                        key={notebook._id || notebook.id || index}
+                        key={notebookId || index}
                         style={{
                           backgroundColor: "white",
                           padding: "24px",
@@ -508,25 +608,79 @@ export default function UserDashboard() {
                           </p>
                         </div>
 
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginTop: "24px" }}>
+                        {/* MAIN ACTION GRID */}
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "24px" }}>
                           <button
-                            onClick={() => navigate(`/notebook/${notebook._id || notebook.id}/study`)}
+                            onClick={() => navigate(`/notebook/${notebookId}/study`)}
                             style={{ padding: "12px", backgroundColor: "white", border: "1px solid #e2e8f0", borderRadius: "8px", color: "#334155", fontWeight: "500", cursor: "pointer", fontSize: "14px" }}
                           >
                             Open
                           </button>
                           <button
-                            onClick={() => navigate(`/notebook/${notebook._id || notebook.id}/quiz`)}
+                            onClick={() => navigate(`/notebook/${notebookId}/quiz`)}
                             style={{ padding: "12px", backgroundColor: "white", border: "1px solid #e2e8f0", borderRadius: "8px", color: "#334155", fontWeight: "500", cursor: "pointer", fontSize: "14px" }}
                           >
                             Quiz
                           </button>
-                          <button
-                            onClick={() => handleDeleteNotebook(notebook._id || notebook.id)}
-                            style={{ padding: "12px", backgroundColor: "white", border: "1px solid #fee2e2", borderRadius: "8px", color: "#ef4444", fontWeight: "500", cursor: "pointer", fontSize: "14px" }}
-                          >
-                            Delete
-                          </button>
+                        </div>
+
+                        {/* CARD FOOTER: LIKES + DELETE BUTTON + USERNAME */}
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginTop: "16px",
+                            paddingTop: "16px",
+                            borderTop: "1px solid #f1f5f9",
+                          }}
+                        >
+                          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                            <DashLikeButton
+                              notebookId={notebookId}
+                              initialLikes={notebook.likes}
+                              initialIsLiked={notebook.isLiked}
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteNotebook(notebookId)}
+                              title="Delete Notebook"
+                              style={{
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                color: "#ef4444",
+                                fontSize: "13px",
+                                fontWeight: "600",
+                                padding: "4px 8px",
+                                borderRadius: "6px",
+                                backgroundColor: "#fef2f2",
+                              }}
+                            >
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                              </svg>
+                              <span>Delete</span>
+                            </button>
+                          </div>
+
+                          <span style={{ fontSize: "13px", color: "#64748b", fontWeight: "600" }}>
+                            @{userData?.username || "You"}
+                          </span>
                         </div>
                       </div>
                     );
@@ -570,79 +724,104 @@ export default function UserDashboard() {
                 </div>
               ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(450px, 1fr))", gap: "24px" }}>
-                  {savedNotebooks.map((notebook, index) => (
-                    <div
-                      key={notebook.id || notebook._id || index}
-                      style={{
-                        backgroundColor: "white",
-                        padding: "24px",
-                        borderRadius: "16px",
-                        border: "1px solid #e2e8f0",
-                        display: "flex",
-                        flexDirection: "column",
-                        boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
+                  {savedNotebooks.map((notebook, index) => {
+                    const notebookId = notebook.id || notebook._id;
+
+                    return (
+                      <div
+                        key={notebookId || index}
+                        style={{
+                          backgroundColor: "white",
+                          padding: "24px",
+                          borderRadius: "16px",
+                          border: "1px solid #e2e8f0",
+                          display: "flex",
+                          flexDirection: "column",
+                          boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
+                          <div
+                            style={{
+                              width: "48px",
+                              height: "48px",
+                              borderRadius: "12px",
+                              backgroundColor: "#f0fdf4",
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              flexShrink: 0,
+                            }}
+                          >
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 style={{ margin: "0 0 8px 0", color: "#0f172a", fontSize: "22px", fontWeight: "800", lineHeight: "1.2" }}>
+                              {notebook.title}
+                            </h3>
+                            <span style={{ fontSize: "14px", color: "#64748b" }}>
+                              By {notebook.author}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div style={{ backgroundColor: "#f8fafc", borderRadius: "12px", padding: "20px", marginTop: "20px", flex: 1 }}>
+                          <span style={{ color: "#2563eb", fontWeight: "bold", fontSize: "14px", display: "block", marginBottom: "8px" }}>
+                            Summary
+                          </span>
+                          <p style={{ margin: 0, color: "#475569", fontSize: "15px", lineHeight: "1.6" }}>
+                            {notebook.summary || "No summary available."}
+                          </p>
+                        </div>
+
+                        {/* MAIN ACTION GRID */}
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginTop: "24px" }}>
+                          <button
+                            onClick={() => navigate(`/notebook/${notebookId}/study`)}
+                            style={{ padding: "12px", backgroundColor: "#2563eb", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
+                          >
+                            Open
+                          </button>
+                          <button
+                            onClick={() => navigate(`/notebook/${notebookId}/quiz`)}
+                            style={{ padding: "12px", backgroundColor: "white", border: "1px solid #e2e8f0", borderRadius: "8px", color: "#334155", fontWeight: "500", cursor: "pointer", fontSize: "13px" }}
+                          >
+                            Quiz
+                          </button>
+                          <button
+                            onClick={() => handleRemoveSavedNotebook(notebookId)}
+                            style={{ padding: "12px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", color: "#dc2626", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
+                            title="Remove from saved notebooks"
+                          >
+                            Remove
+                          </button>
+                        </div>
+
+                        {/* FOOTER WITH INTERACTIVE LIKE BUTTON */}
                         <div
                           style={{
-                            width: "48px",
-                            height: "48px",
-                            borderRadius: "12px",
-                            backgroundColor: "#f0fdf4",
                             display: "flex",
-                            justifyContent: "center",
+                            justifyContent: "space-between",
                             alignItems: "center",
-                            flexShrink: 0,
+                            marginTop: "16px",
+                            paddingTop: "16px",
+                            borderTop: "1px solid #f1f5f9",
                           }}
                         >
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-                          </svg>
-                        </div>
-                        <div>
-                          <h3 style={{ margin: "0 0 8px 0", color: "#0f172a", fontSize: "22px", fontWeight: "800", lineHeight: "1.2" }}>
-                            {notebook.title}
-                          </h3>
-                          <span style={{ fontSize: "14px", color: "#64748b" }}>
-                            By {notebook.author}
+                          <DashLikeButton
+                            notebookId={notebookId}
+                            initialLikes={notebook.likes}
+                            initialIsLiked={notebook.isLiked}
+                          />
+                          <span style={{ fontSize: "13px", color: "#64748b", fontWeight: "600" }}>
+                            {notebook.author}
                           </span>
                         </div>
                       </div>
-
-                      <div style={{ backgroundColor: "#f8fafc", borderRadius: "12px", padding: "20px", marginTop: "20px", flex: 1 }}>
-                        <span style={{ color: "#2563eb", fontWeight: "bold", fontSize: "14px", display: "block", marginBottom: "8px" }}>
-                          Summary
-                        </span>
-                        <p style={{ margin: 0, color: "#475569", fontSize: "15px", lineHeight: "1.6" }}>
-                          {notebook.summary || "No summary available."}
-                        </p>
-                      </div>
-
-                      {/* 🟢 CARD ACTION FOOTER WITH REMOVE SAVE BUTTON */}
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginTop: "24px" }}>
-                        <button
-                          onClick={() => navigate(`/notebook/${notebook.id || notebook._id}/study`)}
-                          style={{ padding: "12px", backgroundColor: "#2563eb", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
-                        >
-                          Open
-                        </button>
-                        <button
-                          onClick={() => navigate(`/notebook/${notebook.id || notebook._id}/quiz`)}
-                          style={{ padding: "12px", backgroundColor: "white", border: "1px solid #e2e8f0", borderRadius: "8px", color: "#334155", fontWeight: "500", cursor: "pointer", fontSize: "13px" }}
-                        >
-                          Quiz
-                        </button>
-                        <button
-                          onClick={() => handleRemoveSavedNotebook(notebook.id || notebook._id)}
-                          style={{ padding: "12px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", color: "#dc2626", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
-                          title="Remove from saved notebooks"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

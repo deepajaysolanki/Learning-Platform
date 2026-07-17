@@ -3,28 +3,40 @@ import '../styles/Footer.css';
 
 export default function Footer() {
   const [adminMessage, setAdminMessage] = useState("");
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState(""); // "", "sending", "success", "error"
 
   const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!adminMessage.trim()) return;
+  e.preventDefault();
+  if (!adminMessage.trim()) return;
 
-    setStatus("sending");
+  setStatus("sending");
 
-    try {
-      // 🟢 Hook this up to your backend support/contact endpoint later if you build one
-      // For now, it will simulate a successful transmission to the admin
-      setTimeout(() => {
-        setAdminMessage("");
-        setStatus("success");
-        setTimeout(() => setStatus(""), 3000); // Clear success message after 3 seconds
-      }, 1000);
-    } catch (err) {
-      console.error("Failed to send message to admin:", err);
+  try {
+    const token = localStorage.getItem("studyAppToken");
+
+    const response = await fetch("http://localhost:3000/contact", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify({
+        message: adminMessage.trim(),
+      }),
+    });
+
+    if (response.ok) {
+      setAdminMessage("");
+      setStatus("success");
+      setTimeout(() => setStatus(""), 3000);
+    } else {
       setStatus("error");
     }
-  };
-
+  } catch (err) {
+    console.error("Failed to send message to admin:", err);
+    setStatus("error");
+  }
+};
   return (
     <footer className="main-footer">
       <div className="footer-container">
@@ -44,7 +56,7 @@ export default function Footer() {
             Empowering students worldwide with intelligent, grounded AI learning companions built around your material.
           </p>
 
-          {/* 🟢 NEW: TALK TO ADMIN COMPONENT HUB 🟢 */}
+          {/* 🟢 CONNECTED: TALK TO ADMIN COMPONENT HUB 🟢 */}
           <div className="footer-admin-chat" style={{ marginTop: "20px", maxWidth: "320px" }}>
             <span style={{ fontSize: "12px", fontWeight: "800", color: "#6366f1", letterSpacing: "1px", display: "block", marginBottom: "8px" }}>
               💬 HAVE QUESTIONS? TALK TO ADMIN
@@ -56,13 +68,13 @@ export default function Footer() {
                   value={adminMessage}
                   onChange={(e) => setAdminMessage(e.target.value)}
                   placeholder="Ask admin anything..." 
-                  className="newsletter-input" // Reusing your existing style baseline safely
+                  className="newsletter-input"
                   style={{ flex: 1 }}
                   disabled={status === "sending"}
                 />
                 <button 
                   type="submit" 
-                  className="btn-subscribe" // Reusing your premium dark button style baseline safely
+                  className="btn-subscribe"
                   style={{ whiteSpace: "nowrap" }}
                   disabled={status === "sending"}
                 >
@@ -73,6 +85,12 @@ export default function Footer() {
               {status === "success" && (
                 <span style={{ fontSize: "12px", color: "#22c55e", fontWeight: "600" }}>
                   🟢 Message sent straight to the admin dashboard!
+                </span>
+              )}
+
+              {status === "error" && (
+                <span style={{ fontSize: "12px", color: "#ef4444", fontWeight: "600" }}>
+                  ⚠️ Failed to send message. Please try again.
                 </span>
               )}
             </form>

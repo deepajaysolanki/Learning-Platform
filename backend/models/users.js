@@ -6,7 +6,7 @@ const uri = process.env.MONGO_URI;
 mongoose.connect(uri);
 
 const userSchema = new mongoose.Schema({
-    fullName: { type: String, default: ""},
+    fullName: { type: String, default: "" },
     username: {
         type: String,
         unique: true,
@@ -25,6 +25,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: 'local'
     },
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
     savedNotebooks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Notebook' }],
     createdAt: {
         type: Date,
