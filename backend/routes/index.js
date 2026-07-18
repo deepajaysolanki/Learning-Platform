@@ -8,12 +8,12 @@ const bcrypt = require('bcrypt');
 const upload = multer({ storage: multer.memoryStorage() });
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
-const Notebook = require('../models/Notebook');
+const Notebook = require('../models/notebook');
 const requireAuth = require('../middleware/auth');
 const cloudinary = require('cloudinary').v2;
 const mammoth = require('mammoth');
 const officeParser = require('officeparser');
-const Message = require('../models/Message');
+const Message = require('../models/message');
 
 // cloudinary setup 
 cloudinary.config({
