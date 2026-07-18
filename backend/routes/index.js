@@ -2,7 +2,6 @@ var express = require('express');
 var router = express.Router();
 const multer = require('multer');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../../.env') }); 
 const User = require('../models/users');
 const bcrypt = require('bcrypt');
 const upload = multer({ storage: multer.memoryStorage() });
