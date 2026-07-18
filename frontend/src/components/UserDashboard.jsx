@@ -22,7 +22,7 @@ const DashLikeButton = ({ notebookId, initialLikes, initialIsLiked }) => {
     setIsLiked(!isLiked);
 
     try {
-      const response = await fetch(`http://localhost:3000/like/${notebookId}`, {
+      const response = await fetch(`https://vibestudy-backend-o61q.onrender.com/like/${notebookId}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -115,7 +115,7 @@ export default function UserDashboard() {
     const fetchProfile = async () => {
       const token = localStorage.getItem("studyAppToken");
       try {
-        const response = await fetch("http://localhost:3000/profile", {
+        const response = await fetch("https://vibestudy-backend-o61q.onrender.com/profile", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -149,7 +149,7 @@ export default function UserDashboard() {
   const fetchSavedNotebooks = async () => {
     try {
       const token = localStorage.getItem("studyAppToken");
-      const response = await fetch("http://localhost:3000/saved-notebooks", {
+      const response = await fetch("https://vibestudy-backend-o61q.onrender.com/saved-notebooks", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -174,7 +174,7 @@ export default function UserDashboard() {
     const token = localStorage.getItem("studyAppToken");
 
     try {
-      const res = await fetch("http://localhost:3000/my-notebooks", {
+      const res = await fetch("https://vibestudy-backend-o61q.onrender.com/my-notebooks", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -210,7 +210,7 @@ export default function UserDashboard() {
 
     const token = localStorage.getItem("studyAppToken");
     try {
-      const res = await fetch(`http://localhost:3000/notebook/${notebookId}`, {
+      const res = await fetch(`https://vibestudy-backend-o61q.onrender.com/notebook/${notebookId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -236,7 +236,7 @@ export default function UserDashboard() {
     setSavedNotebooks((prev) => prev.filter((nb) => (nb.id || nb._id) !== notebookId));
 
     try {
-      const response = await fetch(`http://localhost:3000/save-notebook/${notebookId}`, {
+      const response = await fetch(`https://vibestudy-backend-o61q.onrender.com/save-notebook/${notebookId}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -856,7 +856,7 @@ export default function UserDashboard() {
                     e.preventDefault();
                     const token = localStorage.getItem("studyAppToken");
                     try {
-                      const res = await fetch("http://localhost:3000/profile", {
+                      const res = await fetch("https://vibestudy-backend-o61q.onrender.com/profile", {
                         method: "PUT",
                         headers: {
                           Authorization: `Bearer ${token}`,
@@ -962,7 +962,7 @@ export default function UserDashboard() {
                       const token = localStorage.getItem("studyAppToken");
 
                       try {
-                        const res = await fetch("http://localhost:3000/profile/password", {
+                        const res = await fetch("https://vibestudy-backend-o61q.onrender.com/profile/password", {
                           method: "PUT",
                           headers: {
                             Authorization: `Bearer ${token}`,

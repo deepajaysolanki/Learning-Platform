@@ -15,7 +15,7 @@ export default function Footer() {
   try {
     const token = localStorage.getItem("studyAppToken");
 
-    const response = await fetch("http://localhost:3000/contact", {
+    const response = await fetch("https://vibestudy-backend-o61q.onrender.com/contact", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

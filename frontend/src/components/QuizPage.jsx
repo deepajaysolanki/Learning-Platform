@@ -39,7 +39,7 @@ export default function QuizPage() {
     setScore(0);
     try {
       const response = await fetch(
-        `http://localhost:3000/notebook/${id}/quiz`,
+        `https://vibestudy-backend-o61q.onrender.com/notebook/${id}/quiz`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

@@ -60,7 +60,7 @@ const CreateNotebookModal = ({ isOpen, onClose, onNotebookCreated }) => {
     });
 
     try {
-      const response = await fetch("http://localhost:3000/createnotebook", {
+      const response = await fetch("https://vibestudy-backend-o61q.onrender.com/createnotebook", {
         method: "POST",
         // Do NOT set 'Content-Type': 'application/json' here. 
         // The browser automatically sets the correct multipart boundary for FormData!

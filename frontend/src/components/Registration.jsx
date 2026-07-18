@@ -89,7 +89,7 @@ const Register = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/register", {
+      const response = await fetch("https://vibestudy-backend-o61q.onrender.com/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fullName, username, email, password }),
@@ -114,7 +114,7 @@ const Register = () => {
   //  Google Registration Success Handler
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const response = await fetch("http://localhost:3000/google", {
+      const response = await fetch("https://vibestudy-backend-o61q.onrender.com/google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ credential: credentialResponse.credential }),
@@ -140,7 +140,7 @@ const Register = () => {
     e.preventDefault();
     try {
       const response = await fetch(
-        "http://localhost:3000/google/complete",
+        "https://vibestudy-backend-o61q.onrender.com/google/complete",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

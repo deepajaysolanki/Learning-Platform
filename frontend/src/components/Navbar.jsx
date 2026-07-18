@@ -16,7 +16,7 @@ export default function Navbar() {
       }
 
       try {
-        const response = await fetch("http://localhost:3000/profile", {
+        const response = await fetch("https://vibestudy-backend-o61q.onrender.com/profile", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
