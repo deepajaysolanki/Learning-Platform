@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const requireAdmin = require('../middleware/adminAuth');
-const User = require('../models/Users');
-const Notebook = require('../models/Notebook');
-const Message = require('../models/Message');
+const User = require('../models/users');
+const Notebook = require('../models/notebook');
+const Message = require('../models/message');
 
 // 🟢 1. GET ADMIN DASHBOARD STATS
 router.get('/stats', requireAdmin, async (req, res) => {
