@@ -42,7 +42,7 @@ fixOldNotebookLikes();
 
 // -------------------------------------
 router.get('/', function (req, res, next) {
-  res.send('Welcome to the Workspace API');
+  res.send('Welcome to the VibeStudy backend!');
 });
 
 // route for registration
