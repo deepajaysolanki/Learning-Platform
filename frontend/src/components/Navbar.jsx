@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import VibeStudyIcon from "./VibeStudyIcon";
 import "../styles/Navbar.css";
 
 export default function Navbar() {
@@ -73,23 +74,9 @@ export default function Navbar() {
             gap: "10px",
           }}
         >
-          <div
-            style={{
-              backgroundColor: "#0084ff",
-              width: "32px",
-              height: "32px",
-              borderRadius: "8px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "white",
-              fontSize: "16px",
-            }}
-          >
-            ⠿
-          </div>
+          <VibeStudyIcon size={36} />
           <span style={{ fontSize: "18px", fontWeight: "800", color: "#0f172a" }}>
-            SmartStudy AI
+            VibeStudy 
           </span>
         </Link>
 

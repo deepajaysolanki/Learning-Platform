@@ -176,7 +176,7 @@ const PresentationSlideDeck = memo(({ rawText }) => {
               fontWeight: "600",
             }}
           >
-            <span>SmartStudy Presentation Viewer</span>
+            <span>VibeStudy Presentation Viewer</span>
             <span>Slide {sIdx + 1} of {finalSlides.length}</span>
           </div>
         </div>

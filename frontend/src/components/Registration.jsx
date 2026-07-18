@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet-async";
 import { GoogleLogin } from "@react-oauth/google";
 import { gsap } from "gsap";
 import "../styles/Registration.css";
+import VibeStudyIcon from "./VibeStudyIcon";
 
 const Register = () => {
   const pageScopeRef = useRef(null);
@@ -163,7 +164,7 @@ const Register = () => {
   return (
     <>
       <Helmet>
-        <title>SmartStudy AI - Create Account</title>
+        <title>VibeStudy - Create Account</title>
         <meta charSet="utf-8" />
       </Helmet>
 
@@ -174,16 +175,9 @@ const Register = () => {
           <div className="login-header">
             <div className="login-logo">
               <div className="login-logo-accent">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M4 4h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 10h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 16h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4z" />
-                </svg>
+                <VibeStudyIcon size={36} />
               </div>
-              <span>SmartStudy AI</span>
+              <span>VibeStudy</span>
             </div>
             <h2>Create an account</h2>
             <p>Join us today to start managing your study notes.</p>

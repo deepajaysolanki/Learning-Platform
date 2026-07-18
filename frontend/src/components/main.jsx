@@ -10,7 +10,6 @@ import Footer from "./Footer.jsx";
 import Notebooks from "./Notebooks.jsx";
 import Registration from "./Registration.jsx";
 import Login from "./Login.jsx";
-import MyNotebooks from "./MyNotebooks.jsx";
 import { HelmetProvider } from "react-helmet-async";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import ChatPage from "./ChatPage.jsx";
@@ -18,10 +17,12 @@ import QuizPage from "./QuizPage.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import UserDashboard from "./UserDashboard.jsx";
 import AdminDashboard from "./AdminDashboard.jsx";
+import ScrollToTop from "./ScrollToTop.jsx";
 
 function MainApp() {
   return (
     <>
+      <ScrollToTop />
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
@@ -29,7 +30,6 @@ function MainApp() {
         <Route path="/notebooks" element={<Notebooks />} />
         <Route path="/register" element={<Registration />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/my-notebooks" element={<MyNotebooks />} />
         <Route path="/notebook/:id/study" element={<ChatPage />} />
         <Route path="/notebook/:id/quiz" element={<QuizPage />} />
         <Route path="/dashboard"
@@ -45,10 +45,6 @@ function MainApp() {
     </>
   );
 }
-console.log(
-  "GOOGLE_CLIENT_ID from env:",
-  import.meta.env.VITE_GOOGLE_CLIENT_ID,
-);
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

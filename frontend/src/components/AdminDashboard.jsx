@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import VibeStudyIcon from "./VibeStudyIcon";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -142,9 +143,7 @@ export default function AdminDashboard() {
       {/* SIDEBAR */}
       <div style={{ width: "250px", backgroundColor: "#ffffff", padding: "24px", borderRight: "1px solid #e2e8f0", display: "flex", flexDirection: "column" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "40px" }}>
-          <div style={{ width: "32px", height: "32px", borderRadius: "8px", backgroundColor: "#6366f1", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" }}>
-            🛡️
-          </div>
+          <VibeStudyIcon size={36} />
           <h2 style={{ fontSize: "18px", fontWeight: "800", color: "#0f172a", margin: 0 }}>Admin Portal</h2>
         </div>
 

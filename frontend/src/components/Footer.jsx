@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import '../styles/Footer.css';
+import VibeStudyIcon from './VibeStudyIcon';
 
 export default function Footer() {
   const [adminMessage, setAdminMessage] = useState("");
@@ -45,11 +46,9 @@ export default function Footer() {
         <div className="footer-brand-column">
           <div className="footer-logo">
             <div className="logo-icon-box">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M4 4h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 10h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 16h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4z"/>
-              </svg>
+              <VibeStudyIcon size={36} />
             </div>
-            <span className="logo-text">SmartStudy AI</span>
+            <span className="logo-text">VibeStudy</span>
           </div>
           
           <p className="footer-tagline">
@@ -136,7 +135,7 @@ export default function Footer() {
       <div className="footer-bottom-bar">
         <div className="footer-bottom-container">
           <p className="copyright-text">
-            © 2026 SmartStudy AI, Inc. All rights reserved.
+            © 2026 VibeStudy, Inc. All rights reserved.
           </p>
           <div className="footer-socials">
             <a href="https://twitter.com" target="_blank" rel="noreferrer" aria-label="Twitter" className="social-icon">𝕏</a>

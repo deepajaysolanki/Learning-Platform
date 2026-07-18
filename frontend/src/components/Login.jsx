@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet-async";
 import { GoogleLogin } from "@react-oauth/google";
 import { gsap } from "gsap";
 import "../styles/Login.css";
+import VibeStudyIcon from "./VibeStudyIcon";
 
 const Login = () => {
   const pageScopeRef = useRef(null);
@@ -117,7 +118,7 @@ const Login = () => {
   return (
     <>
       <Helmet>
-        <title>SmartStudy AI - Login</title>
+        <title>VibeStudy - Login</title>
         <meta charSet="utf-8" />
       </Helmet>
 
@@ -128,11 +129,9 @@ const Login = () => {
           <div className="login-header">
             <div className="login-logo">
               <div className="login-logo-accent">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M4 4h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 10h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 16h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4z" />
-                </svg>
+                <VibeStudyIcon size={36} />
               </div>
-              <span>SmartStudy AI</span>
+              <span>VibeStudy</span>
             </div>
             <h2>Sign in</h2>
             <p>Welcome back! Please enter your details to continue.</p>
