@@ -7,11 +7,7 @@
   serverSelectionTimeoutMS: 5000
 })
 .then(() => {
-  console.log("🚀 MongoDB Connected successfully!");
-  
-  // 2. ONLY run your migrations and start your server after the connection is solid
-  runMigrations(); // Move your migration execution inside this block!
-  
+  console.log("🚀 MongoDB Connected successfully!");  
   app.listen(process.env.PORT || 3000, () => {
     console.log(`Server running on port ${process.env.PORT || 3000}`);
   });
