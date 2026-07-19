@@ -37,7 +37,15 @@ async function fixOldNotebookLikes() {
     console.error("Migration error:", err);
   }
 }
-fixOldNotebookLikes();
+if (mongoose.connection.readyState === 1) {
+  // If already connected, run it
+  fixOldNotebookLikes();
+} else {
+  // Otherwise, wait until the connection event fires successfully!
+  mongoose.connection.once('connected', () => {
+    fixOldNotebookLikes();
+  });
+}
 
 // -------------------------------------
 router.get('/', function (req, res, next) {
