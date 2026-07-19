@@ -3,14 +3,22 @@
   const mongoose = require('mongoose');
 
   // require('dotenv').config({ path: '../.env'});
-  const uri = process.env.MONGO_URI;
-  mongoose.connect(uri, {
-    ssl: true,
-    tls: true,
-    serverSelectionTimeoutMS: 5000
-  })
-  .then(() => console.log("🚀 Successfully connected to MongoDB Atlas!"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
+  mongoose.connect(process.env.MONGO_URI, {
+  serverSelectionTimeoutMS: 5000
+})
+.then(() => {
+  console.log("🚀 MongoDB Connected successfully!");
+  
+  // 2. ONLY run your migrations and start your server after the connection is solid
+  runMigrations(); // Move your migration execution inside this block!
+  
+  app.listen(process.env.PORT || 3000, () => {
+    console.log(`Server running on port ${process.env.PORT || 3000}`);
+  });
+})
+.catch(err => {
+  console.error("❌ Critical MongoDB connection failure:", err);
+});
 
   const notebookSchema = new mongoose.Schema({
     title: { type: String, required: true, trim: true },
