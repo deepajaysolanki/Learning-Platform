@@ -13,6 +13,7 @@ const cloudinary = require('cloudinary').v2;
 const mammoth = require('mammoth');
 const officeParser = require('officeparser');
 const Message = require('../models/message');
+const mongoose = require('mongoose');
 
 // cloudinary setup 
 cloudinary.config({
