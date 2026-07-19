@@ -3,7 +3,13 @@ const mongoose = require('mongoose');
 
 // require('dotenv').config({ path: '../.env' });
 const uri = process.env.MONGO_URI;
-mongoose.connect(uri);
+mongoose.connect(uri, {
+  ssl: true,
+  tls: true,
+  serverSelectionTimeoutMS: 5000
+})
+.then(() => console.log("🚀 Successfully connected to MongoDB Atlas!"))
+.catch((err) => console.error("❌ MongoDB connection error:", err));
 
 const userSchema = new mongoose.Schema({
     fullName: { type: String, default: "" },
