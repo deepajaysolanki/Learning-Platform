@@ -155,12 +155,6 @@ const Login = () => {
                 </div>
 
                 <div className="form-group">
-                  <div className="label-wrapper-row">
-                    <label htmlFor="password">Password</label>
-                    <a href="/forgot-password" className="forgot-password-link">
-                      Forgot password?
-                    </a>
-                  </div>
                   <input
                     type="password"
                     id="password"

@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import ReactMarkdown from "react-markdown";
 import { renderAsync } from "docx-preview";
+import "../styles/ChatPage.css"; // 🟢 Import external stylesheet
 
 // ============================================================================
 // 1. LOCAL DOCX VIEWER COMPONENT
@@ -33,23 +34,11 @@ const LocalDocxViewer = memo(({ fileUrl }) => {
       });
   }, [fileUrl]);
 
-  return (
-    <div
-      ref={viewerRef}
-      style={{
-        height: "100%",
-        width: "100%",
-        overflowY: "auto",
-        backgroundColor: "#646464",
-        padding: "30px 20px",
-        boxSizing: "border-box",
-      }}
-    />
-  );
+  return <div ref={viewerRef} className="docx-viewer-wrapper" />;
 });
 
 // ============================================================================
-// 2. POWERPOINT PRESENTATION SLIDE CARDS (Fixed Single-Word Blank Slide Bug)
+// 2. POWERPOINT PRESENTATION SLIDE CARDS
 // ============================================================================
 const PresentationSlideDeck = memo(({ rawText }) => {
   const lines = (rawText || "").split("\n").map((l) => l.trim()).filter(Boolean);
@@ -69,7 +58,6 @@ const PresentationSlideDeck = memo(({ rawText }) => {
       currentSlide.title = line;
     } else {
       currentSlide.points.push(line.replace(/^[•\-\*]\s*/, ""));
-      // Group bullet points into readable slide chunks (max 5 points per card)
       if (currentSlide.points.length >= 5) {
         slides.push(currentSlide);
         currentSlide = { title: "", points: [] };
@@ -84,98 +72,22 @@ const PresentationSlideDeck = memo(({ rawText }) => {
   const finalSlides = slides.length > 0 ? slides : [{ title: "Presentation Content", points: lines }];
 
   return (
-    <div
-      style={{
-        height: "100%",
-        width: "100%",
-        overflowY: "auto",
-        backgroundColor: "#2e323b",
-        padding: "40px 20px",
-        boxSizing: "border-box",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: "40px",
-      }}
-    >
+    <div className="presentation-deck">
       {finalSlides.map((slide, sIdx) => (
-        <div
-          key={sIdx}
-          style={{
-            width: "100%",
-            maxWidth: "850px",
-            minHeight: "420px",
-            backgroundColor: "#ffffff",
-            borderRadius: "8px",
-            boxShadow: "0 20px 35px rgba(0, 0, 0, 0.4)",
-            padding: "40px 50px",
-            boxSizing: "border-box",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            position: "relative",
-            border: "1px solid rgba(255,255,255,0.1)",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              height: "6px",
-              backgroundColor: "#2563eb",
-              borderRadius: "8px 8px 0 0",
-            }}
-          />
+        <div key={sIdx} className="slide-card">
+          <div className="slide-accent-line" />
 
           <div>
-            {slide.title && (
-              <h2
-                style={{
-                  fontSize: "22px",
-                  fontWeight: "700",
-                  color: "#0f172a",
-                  margin: "0 0 20px 0",
-                  paddingBottom: "12px",
-                  borderBottom: "2px solid #f1f5f9",
-                  fontFamily: "'Segoe UI', Roboto, sans-serif",
-                }}
-              >
-                {slide.title}
-              </h2>
-            )}
+            {slide.title && <h2 className="slide-title">{slide.title}</h2>}
 
-            <ul style={{ margin: 0, paddingLeft: "20px", display: "flex", flexDirection: "column", gap: "12px" }}>
+            <ul className="slide-bullets">
               {slide.points.map((pt, pIdx) => (
-                <li
-                  key={pIdx}
-                  style={{
-                    fontSize: "15px",
-                    color: "#334155",
-                    lineHeight: "1.6",
-                    fontFamily: "'Segoe UI', Roboto, sans-serif",
-                  }}
-                >
-                  {pt}
-                </li>
+                <li key={pIdx}>{pt}</li>
               ))}
             </ul>
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              paddingTop: "16px",
-              marginTop: "20px",
-              borderTop: "1px solid #f8fafc",
-              color: "#94a3b8",
-              fontSize: "12px",
-              fontWeight: "600",
-            }}
-          >
+          <div className="slide-footer">
             <span>VibeStudy Presentation Viewer</span>
             <span>Slide {sIdx + 1} of {finalSlides.length}</span>
           </div>
@@ -186,41 +98,20 @@ const PresentationSlideDeck = memo(({ rawText }) => {
 });
 
 // ============================================================================
-// 3. PAPER DOCUMENT CANVAS RENDERER (.txt) - FULL-WIDTH CLEAN READER
+// 3. PAPER DOCUMENT CANVAS RENDERER (.txt)
 // ============================================================================
 const PaperTextViewer = memo(({ rawText }) => {
   const content = rawText || "[No text found]";
 
   return (
-    <div
-      style={{
-        height: "100%",
-        width: "100%",
-        overflowY: "auto",
-        backgroundColor: "#ffffff", // Pure white full-screen background
-        padding: "40px 60px",
-        boxSizing: "border-box",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: "900px",
-          margin: "0 auto", // Center text column gracefully
-          fontFamily: "'Inter', system-ui, -apple-system, sans-serif", // Clean modern sans-serif font
-          color: "#0f172a",
-          lineHeight: "1.8",
-          fontSize: "15px",
-          whiteSpace: "pre-wrap",
-          wordBreak: "break-word",
-        }}
-      >
-        {content}
-      </div>
+    <div className="paper-text-wrapper">
+      <div className="paper-text-content">{content}</div>
     </div>
   );
 });
+
 // ============================================================================
-// 4. ISOLATED MASTER DOCUMENT ROUTER (Guaranteed No Automatic Downloads)
+// 4. ISOLATED MASTER DOCUMENT ROUTER
 // ============================================================================
 const DocumentRenderer = memo(({ doc }) => {
   if (!doc) return null;
@@ -228,13 +119,10 @@ const DocumentRenderer = memo(({ doc }) => {
   const fileName = doc.fileName ? doc.fileName.toLowerCase() : "";
   const fileType = doc.fileType ? doc.fileType.toLowerCase() : "";
 
-  // 1. Word Document (.docx / .doc)
   if (fileName.endsWith(".docx") || fileName.endsWith(".doc")) {
     return <LocalDocxViewer fileUrl={doc.fileUrl} />;
   }
 
-  // 2. PowerPoint (.pptx / .ppt)
-  // Force PowerPoint files directly into the React Presentation Slide Deck
   if (
     fileName.endsWith(".pptx") ||
     fileName.endsWith(".ppt") ||
@@ -244,7 +132,6 @@ const DocumentRenderer = memo(({ doc }) => {
     return <PresentationSlideDeck rawText={doc.rawText} />;
   }
 
-  // 3. Native PDF Mode ONLY
   if (fileName.endsWith(".pdf") || fileType.includes("pdf")) {
     return (
       <iframe
@@ -258,7 +145,6 @@ const DocumentRenderer = memo(({ doc }) => {
     );
   }
 
-  // 4. Fallback Plain Text (.txt or others)
   return <PaperTextViewer rawText={doc.rawText} />;
 });
 
@@ -320,8 +206,7 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [messages]);
 
@@ -358,7 +243,7 @@ export default function ChatPage() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ message: userText }),
-        },
+        }
       );
 
       const data = await response.json();
@@ -450,11 +335,7 @@ export default function ChatPage() {
   };
 
   if (!notebook && !fullTextLoaded) {
-    return (
-      <div style={{ padding: "40px", textAlign: "center", fontFamily: "sans-serif" }}>
-        Loading Study Mode...
-      </div>
-    );
+    return <div className="chatpage-loading">Loading Study Mode...</div>;
   }
 
   const activeDocument =
@@ -468,54 +349,21 @@ export default function ChatPage() {
         <title>Study Mode - {notebook?.title || "Notebook"}</title>
       </Helmet>
 
-      <div
-        style={{
-          display: "flex",
-          height: "100vh",
-          width: "100vw",
-          overflow: "hidden",
-          backgroundColor: "#f8fafc",
-          fontFamily: "sans-serif",
-        }}
-      >
+      <div className="chatpage-wrapper">
         {/* LEFT WORKSPACE CANVAS CONTAINER */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", padding: "16px 24px" }}>
-          
-          {/* Top Control Bar Deck */}
-          <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "14px", flexShrink: 0 }}>
-            <button
-              onClick={() => navigate(-1)}
-              style={{
-                padding: "8px 16px",
-                cursor: "pointer",
-                borderRadius: "8px",
-                border: "1px solid #cbd5e1",
-                backgroundColor: "white",
-                fontWeight: "bold",
-                fontSize: "13px",
-              }}
-            >
+        <div className="workspace-container">
+          <div className="workspace-top-bar">
+            <button className="btn-back" onClick={() => navigate(-1)}>
               ← Back
             </button>
 
-            {/* Document Drawer Selection Tabs */}
             {notebook?.documents && notebook.documents.length > 0 && (
-              <div style={{ display: "flex", gap: "6px", overflowX: "auto", flex: 1 }}>
+              <div className="doc-tabs-scroll">
                 {notebook.documents.map((doc, idx) => (
                   <button
                     key={idx}
                     onClick={() => setActiveDocIndex(idx)}
-                    style={{
-                      padding: "8px 14px",
-                      borderRadius: "8px",
-                      border: activeDocIndex === idx ? "1px solid #6366f1" : "1px solid #e2e8f0",
-                      backgroundColor: activeDocIndex === idx ? "#eff6ff" : "white",
-                      color: activeDocIndex === idx ? "#2563eb" : "#475569",
-                      fontWeight: "600",
-                      fontSize: "13px",
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
-                    }}
+                    className={`doc-tab-btn ${activeDocIndex === idx ? "active" : ""}`}
                   >
                     {doc.fileName.toLowerCase().endsWith(".pptx") ? "📊" : "📄"} {doc.fileName.toUpperCase()}
                   </button>
@@ -524,27 +372,15 @@ export default function ChatPage() {
             )}
           </div>
 
-          {/* Canvas Viewport Frame */}
-          <div
-            style={{
-              backgroundColor: "white",
-              borderRadius: "12px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
-              border: "1px solid #e2e8f0",
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden",
-            }}
-          >
+          <div className="canvas-viewport">
             {activeDocument ? (
               <DocumentRenderer doc={activeDocument} />
             ) : (
-              <div style={{ padding: "40px", color: "#334155", overflowY: "auto" }}>
-                <p style={{ color: "#64748b", fontStyle: "italic", marginBottom: "16px" }}>
+              <div className="empty-doc-view">
+                <p className="notice-text">
                   No active source file loaded. Showing core summary:
                 </p>
-                <p style={{ whiteSpace: "pre-wrap", lineHeight: "1.8", fontSize: "16px" }}>
+                <p className="summary-body">
                   {notebook.summary || notebook.aiSummary}
                 </p>
               </div>
@@ -553,89 +389,42 @@ export default function ChatPage() {
         </div>
 
         {/* RIGHT SIDE: UTILITY CONTROL PANELS */}
-        <div
-          style={{
-            width: "450px",
-            flexShrink: 0,
-            borderLeft: "1px solid #e2e8f0",
-            backgroundColor: "white",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          {/* Nav Selectors */}
-          <div
-            style={{
-              display: "flex",
-              borderBottom: "1px solid #e2e8f0",
-              backgroundColor: "#f8fafc",
-            }}
-          >
+        <div className="utility-panel-sidebar">
+          <div className="utility-tabs-header">
             <button
               onClick={() => setActiveTab("chat")}
-              style={{
-                flex: 1,
-                padding: "16px 0",
-                border: "none",
-                backgroundColor: activeTab === "chat" ? "white" : "transparent",
-                color: activeTab === "chat" ? "#6366f1" : "#64748b",
-                borderBottom: activeTab === "chat" ? "2px solid #6366f1" : "2px solid transparent",
-                fontWeight: activeTab === "chat" ? "bold" : "normal",
-                cursor: "pointer",
-                fontSize: "14px",
-              }}
+              className={`tab-selector-btn ${activeTab === "chat" ? "active" : ""}`}
             >
               💬 Text Chat
             </button>
 
             <button
               onClick={() => setActiveTab("audio")}
-              style={{
-                flex: 1,
-                padding: "16px 0",
-                border: "none",
-                backgroundColor: activeTab === "audio" ? "white" : "transparent",
-                color: activeTab === "audio" ? "#6366f1" : "#64748b",
-                borderBottom: activeTab === "audio" ? "2px solid #6366f1" : "2px solid transparent",
-                fontWeight: activeTab === "audio" ? "bold" : "normal",
-                cursor: "pointer",
-                fontSize: "14px",
-              }}
+              className={`tab-selector-btn ${activeTab === "audio" ? "active" : ""}`}
             >
               🎧 Audio Lesson
             </button>
 
             <button
               onClick={() => setActiveTab("video")}
-              style={{
-                flex: 1,
-                padding: "16px 0",
-                border: "none",
-                backgroundColor: activeTab === "video" ? "white" : "transparent",
-                color: activeTab === "video" ? "#6366f1" : "#64748b",
-                borderBottom: activeTab === "video" ? "2px solid #6366f1" : "2px solid transparent",
-                fontWeight: activeTab === "video" ? "bold" : "normal",
-                cursor: "pointer",
-                fontSize: "14px",
-              }}
+              className={`tab-selector-btn ${activeTab === "video" ? "active" : ""}`}
             >
               🎥 Video Lessons
             </button>
           </div>
 
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }}>
-            
+          <div className="utility-content-body">
             {/* TAB 1: AI TUTOR CONVERSATION PANEL */}
             {activeTab === "chat" && (
               <>
-                <div style={{ padding: "16px 20px", borderBottom: "1px solid #e2e8f0", backgroundColor: "#f8fafc" }}>
-                  <h3 style={{ margin: 0, fontSize: "16px", color: "#0f172a" }}>AI Tutor</h3>
+                <div className="panel-section-header">
+                  <h3>AI Tutor</h3>
                 </div>
 
-                <div ref={chatContainerRef} style={{ flex: 1, padding: "20px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div ref={chatContainerRef} className="chat-stream-container">
                   {messages.map((msg, i) => (
-                    <div key={i} style={{ display: "flex", justifyContent: msg.role === "ai" ? "flex-start" : "flex-end" }}>
-                      <div style={{ backgroundColor: msg.role === "ai" ? "#f8fafc" : "#6366f1", color: msg.role === "ai" ? "#334155" : "#ffffff", padding: "16px", borderRadius: msg.role === "ai" ? "12px 12px 12px 4px" : "12px 12px 4px 12px", maxWidth: "90%", fontSize: "15px", lineHeight: "1.6", border: msg.role === "ai" ? "1px solid #e2e8f0" : "none", wordBreak: "break-word" }}>
+                    <div key={i} className={`chat-bubble-row ${msg.role}`}>
+                      <div className={`chat-bubble ${msg.role}`}>
                         {msg.role === "ai" ? (
                           <ReactMarkdown
                             components={{
@@ -656,10 +445,8 @@ export default function ChatPage() {
                   ))}
 
                   {isChatLoading && (
-                    <div style={{ display: "flex", justifyContent: "flex-start" }}>
-                      <div style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", padding: "12px 16px", borderRadius: "12px 12px 12px 4px", color: "#64748b", fontSize: "14px", fontStyle: "italic" }}>
-                        Thinking...
-                      </div>
+                    <div className="thinking-indicator">
+                      <div className="thinking-bubble">Thinking...</div>
                     </div>
                   )}
                 </div>
@@ -668,28 +455,38 @@ export default function ChatPage() {
 
             {/* TAB 2: AUDIO OVERVIEW */}
             {activeTab === "audio" && (
-              <div style={{ flex: 1, padding: "20px", overflowY: "auto", textAlign: "center" }}>
-                <h3 style={{ marginTop: "20px", color: "#0f172a" }}>🎧 Custom Audio Overview</h3>
-                <p style={{ color: "#64748b", fontSize: "14px", marginBottom: "30px" }}>Ask a question below, or generate a general summary!</p>
+              <div className="tab-panel-scroll centered">
+                <h3 className="panel-sub-title">🎧 Custom Audio Overview</h3>
+                <p className="panel-sub-desc">
+                  Ask a question below, or generate a general summary!
+                </p>
 
                 {!audioScript && !isAudioLoading && (
-                  <button onClick={() => handleAudioSubmit(null)} style={{ backgroundColor: "#2563eb", color: "white", padding: "12px 24px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "bold", width: "100%" }}>
+                  <button onClick={() => handleAudioSubmit(null)} className="btn-primary-action">
                     Generate General Overview
                   </button>
                 )}
 
-                {isAudioLoading && <div style={{ margin: "40px 0", color: "#6366f1", fontWeight: "bold" }}>⏳ Generating your audio script...</div>}
+                {isAudioLoading && (
+                  <div style={{ margin: "40px 0", color: "#6366f1", fontWeight: "bold" }}>
+                    ⏳ Generating your audio script...
+                  </div>
+                )}
 
                 {audioScript && !isAudioLoading && (
                   <div style={{ textAlign: "left", marginTop: "20px" }}>
                     {isPlaying ? (
-                      <button onClick={stopAudio} style={{ backgroundColor: "#dc2626", color: "white", padding: "10px 20px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "bold", width: "100%", marginBottom: "20px" }}>⏹ Stop Playback</button>
+                      <button onClick={stopAudio} className="btn-danger-action">
+                        ⏹ Stop Playback
+                      </button>
                     ) : (
-                      <button onClick={() => playBrowserAudio(audioScript)} style={{ backgroundColor: "#16a34a", color: "white", padding: "10px 20px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "bold", width: "100%", marginBottom: "20px" }}>▶️ Replay Audio</button>
+                      <button onClick={() => playBrowserAudio(audioScript)} className="btn-success-action">
+                        ▶️ Replay Audio
+                      </button>
                     )}
-                    <div style={{ backgroundColor: "#f8fafc", padding: "15px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px", lineHeight: "1.6", color: "#334155" }}>
+                    <div className="script-box">
                       <strong>Generated Script:</strong>
-                      <p style={{ marginTop: "10px" }}>{audioScript}</p>
+                      <p>{audioScript}</p>
                     </div>
                   </div>
                 )}
@@ -698,25 +495,40 @@ export default function ChatPage() {
 
             {/* TAB 3: VIDEO SEARCH TRACKS */}
             {activeTab === "video" && (
-              <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
-                <h3 style={{ marginTop: "10px", color: "#0f172a", textAlign: "center" }}>🎥 Recommended Lessons</h3>
-                <p style={{ color: "#64748b", fontSize: "14px", marginBottom: "30px", textAlign: "center" }}>Search a specific topic below, or click the button to find general videos!</p>
+              <div className="tab-panel-scroll">
+                <h3 className="panel-sub-title" style={{ textAlign: "center" }}>
+                  🎥 Recommended Lessons
+                </h3>
+                <p className="panel-sub-desc" style={{ textAlign: "center" }}>
+                  Search a specific topic below, or click the button to find general videos!
+                </p>
 
                 {isVideoLoading ? (
-                  <div style={{ margin: "40px 0", color: "#6366f1", fontWeight: "bold", textAlign: "center" }}>⏳ Searching YouTube...</div>
+                  <div style={{ margin: "40px 0", color: "#6366f1", fontWeight: "bold", textAlign: "center" }}>
+                    ⏳ Searching YouTube...
+                  </div>
                 ) : videos.length === 0 ? (
-                  <button onClick={() => handleVideoSearch(null)} style={{ backgroundColor: "#ef4444", color: "white", padding: "12px 24px", border: "none", borderRadius: "8px", cursor: "pointer", width: "100%", fontWeight: "bold" }}>
+                  <button onClick={() => handleVideoSearch(null)} className="btn-youtube-action">
                     Find Videos for "{notebook?.title}"
                   </button>
                 ) : (
-                  <div style={{ display: "grid", gap: "20px", marginTop: "10px" }}>
+                  <div className="videos-grid">
                     {videos.map((video) => {
                       const videoId = video.id?.videoId || video.id;
                       if (!videoId) return null;
 
                       return (
-                        <div key={videoId} style={{ borderRadius: "8px", overflow: "hidden", border: "1px solid #e2e8f0" }}>
-                          <iframe width="100%" height="220" src={`https://www.youtube.com/embed/${videoId}`} title="YouTube Video Player" frameBorder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ display: "block" }} />
+                        <div key={videoId} className="video-card-embed">
+                          <iframe
+                            width="100%"
+                            height="220"
+                            src={`https://www.youtube.com/embed/${videoId}`}
+                            title="YouTube Video Player"
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            style={{ display: "block" }}
+                          />
                         </div>
                       );
                     })}
@@ -727,15 +539,30 @@ export default function ChatPage() {
           </div>
 
           {/* GLOBAL INPUT BOX */}
-          <form onSubmit={handleSend} style={{ display: "flex", padding: "16px", borderTop: "1px solid #e2e8f0", backgroundColor: "#ffffff", gap: "10px" }}>
+          <form onSubmit={handleSend} className="global-input-form">
             <input
               type="text"
+              className="global-text-input"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={activeTab === "chat" ? "Ask a question..." : activeTab === "audio" ? "What should the audio focus on?" : "Search for a specific video topic..."}
-              style={{ flex: 1, padding: "10px 16px", borderRadius: "24px", border: "1px solid #cbd5e1", outline: "none", fontSize: "14px" }}
+              placeholder={
+                activeTab === "chat"
+                  ? "Ask a question..."
+                  : activeTab === "audio"
+                  ? "What should the audio focus on?"
+                  : "Search for a specific video topic..."
+              }
             />
-            <button type="submit" disabled={(activeTab === "chat" && isChatLoading) || (activeTab === "audio" && isAudioLoading) || (activeTab === "video" && isVideoLoading) || !input.trim()} style={{ padding: "8px 16px", backgroundColor: "#6366f1", color: "white", border: "none", borderRadius: "24px", cursor: "pointer", fontWeight: "600" }}>
+            <button
+              type="submit"
+              className="btn-send-input"
+              disabled={
+                (activeTab === "chat" && isChatLoading) ||
+                (activeTab === "audio" && isAudioLoading) ||
+                (activeTab === "video" && isVideoLoading) ||
+                !input.trim()
+              }
+            >
               {activeTab === "video" ? "Search" : activeTab === "chat" ? "Send" : "Generate"}
             </button>
           </form>

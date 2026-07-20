@@ -80,14 +80,14 @@
 .intelligence-engine-tag { position: absolute; bottom: 0px; text-align: center; }
 .intelligence-engine-tag p { margin: 0; font-size: 10px; font-weight: bold; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase; }
 
-.floating-card { position: absolute; background-color: #ffffff; padding: 8px 16px; border-radius: 30px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 8px; z-index: 3; box-shadow: 0 8px 20px rgba(15,23,42,0.04); border: 1px solid #f1f5f9; }
+.floating-card { position: absolute; background-color: #ffffff; padding: 8px 16px; border-radius: 30px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 8px; z-index: 3; box-shadow: 0 8px 20px rgba(15,23,42,0.06); border: 1px solid #e2e8f0; white-space: nowrap; }
 .float-pdf { top: 8%; left: -2%; color: #4f46e5; }
 .float-audio { top: 20%; right: -4%; color: #0f172a; }
 .float-doc { bottom: 14%; left: -4%; color: #0f172a; }
 .float-video { bottom: 6%; right: 0%; color: #2563eb; }
 
 /* ==========================================================================
-   3. PIPELINE HUB INTERACTIVE REGION (STRICT ALIGNMENT FIX)
+   3. PIPELINE HUB INTERACTIVE REGION
    ========================================================================== */
 .interactive-hub-container {
   display: flex;
@@ -104,7 +104,7 @@
   flex-direction: column;
   justify-content: space-between;
   width: 280px;
-  height: 300px; /* Lock to 300px to perfectly match the 300px SVG viewbox */
+  height: 300px;
 }
 
 .source-card, .output-card {
@@ -178,18 +178,91 @@
 .sphere-content-box p { font-size: 10px; color: #64748b; }
 
 /* ==========================================================================
-   4. ACCORDION FEATURE WORKFLOW PANELS
+   4. ACCORDION FEATURE WORKFLOW PANELS (Desktop Default)
    ========================================================================== */
-.master-accordion-section { background-color: #f8fafc; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; }
-.accordion-flex-container { display: flex; gap: 16px; height: 460px; width: 100%; }
-.accordion-panel { flex: 0.6; border-radius: 20px; overflow: hidden; position: relative; background-image: var(--panel-bg); background-size: cover; background-position: center; filter: grayscale(100%); transition: flex 0.6s cubic-bezier(0.25, 1, 0.5, 1), filter 0.6s ease; cursor: pointer; }
-.accordion-panel.active { flex: 2.4; filter: grayscale(0%); }
-.panel-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(15, 23, 42, 0.9) 15%, rgba(15, 23, 42, 0.15) 100%); z-index: 1; }
-.panel-content { position: absolute; inset: 0; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; z-index: 2; color: white; }
-.panel-badge-tag { background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; align-self: flex-start; }
-.panel-text-block h3 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
-.panel-text-block p { font-size: 14px; line-height: 1.5; color: #cbd5e1; max-width: 440px; opacity: 0; height: 0; overflow: hidden; transition: opacity 0.3s ease, height 0.3s ease; }
-.accordion-panel.active .panel-text-block p { opacity: 1; height: auto; margin-top: 6px; }
+.master-accordion-section { 
+  background-color: #f8fafc; 
+  border-top: 1px solid #f1f5f9; 
+  border-bottom: 1px solid #f1f5f9; 
+}
+
+.accordion-flex-container { 
+  display: flex; 
+  gap: 16px; 
+  height: 460px; 
+  width: 100%; 
+}
+
+.accordion-panel { 
+  flex: 0.6; 
+  border-radius: 20px; 
+  overflow: hidden; 
+  position: relative; 
+  background-image: var(--panel-bg); 
+  background-size: cover; 
+  background-position: center; 
+  filter: grayscale(100%); 
+  transition: flex 0.5s cubic-bezier(0.25, 1, 0.5, 1), filter 0.5s ease; 
+  cursor: pointer; 
+}
+
+.accordion-panel.active { 
+  flex: 2.4; 
+  filter: grayscale(0%); 
+}
+
+.panel-overlay { 
+  position: absolute; 
+  inset: 0; 
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.92) 20%, rgba(15, 23, 42, 0.2) 100%); 
+  z-index: 1; 
+  pointer-events: none;
+}
+
+.panel-content { 
+  position: absolute; 
+  inset: 0; 
+  padding: 24px; 
+  display: flex; 
+  flex-direction: column; 
+  justify-content: space-between; 
+  z-index: 2; 
+  color: white; 
+  pointer-events: none;
+}
+
+.panel-badge-tag { 
+  background: rgba(255, 255, 255, 0.2); 
+  backdrop-filter: blur(8px); 
+  padding: 6px 12px; 
+  border-radius: 20px; 
+  font-size: 11px; 
+  font-weight: 600; 
+  align-self: flex-start; 
+}
+
+.panel-text-block h3 { 
+  font-size: 22px; 
+  font-weight: 700; 
+  margin-bottom: 8px; 
+}
+
+.panel-desc { 
+  font-size: 14px; 
+  line-height: 1.5; 
+  color: #cbd5e1; 
+  max-width: 440px; 
+  opacity: 0; 
+  max-height: 0;
+  overflow: hidden; 
+  transition: opacity 0.3s ease, max-height 0.3s ease; 
+}
+
+.accordion-panel.active .panel-desc { 
+  opacity: 1; 
+  max-height: 200px;
+  margin-top: 6px; 
+}
 
 /* ==========================================================================
    5. PUBLIC NOTEBOOKS MARQUEE INFRASTRUCTURE
@@ -211,7 +284,7 @@
 .btn-marquee-primary { flex: 1; padding: 10px; background-color: #6366f1; border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; font-size: 13px; }
 .btn-marquee-secondary { flex: 1; padding: 10px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; color: #4f46e5; font-weight: 600; cursor: pointer; font-size: 13px; }
 .marquee-card-footer { border-top: 1px solid #e2e8f0; margin-top: 16px; padding-top: 12px; display: flex; justify-content: space-between; align-items: center; }
-.marquee-likes { display: flex; align-items: center; gap: 6px; color: #64748b; font-size: 13px; }
+.marquee-likes { display: flex; align-items: center; gap: 6px; color: #ff4757; font-size: 13px; font-weight: bold; }
 .marquee-author-badge { background-color: #eff6ff; color: #2563eb; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: bold; }
 
 /* ==========================================================================
@@ -227,7 +300,7 @@
 .cta-fineprint { color: #94a3b8; font-size: 12px; }
 
 /* ==========================================================================
-   7. ROBUST MEDIA QUERIES MATRIX
+   7. MEDIA QUERIES (MOBILE RESPONSIVE FIXES)
    ========================================================================== */
 @media (max-width: 992px) {
   .premium-experience > section { padding: 60px 20px; }
@@ -240,11 +313,38 @@
   .interactive-hub-container { flex-direction: column; gap: 20px; height: auto; }
   .hub-col { width: 100%; max-width: 440px; height: auto; gap: 16px; }
   .central-svg-stream { height: 100px; width: 100%; }
-  .central-svg-stream svg { display: none; } /* Drops vector path wire overlays completely on mobile */
+  .central-svg-stream svg { display: none; }
 
-  .accordion-flex-container { flex-direction: column; height: auto; gap: 12px; }
-  .accordion-panel { flex: unset; width: 100%; height: 110px; filter: grayscale(0%); }
-  .accordion-panel.active { height: 220px; }
+  /* 🟢 MOBILE ACCORDION FIX: Full vertical stack displaying all 4 cards clearly with descriptions */
+  .accordion-flex-container { 
+    flex-direction: column; 
+    height: auto !important; 
+    gap: 16px; 
+  }
+
+  .accordion-panel { 
+    flex: none !important; 
+    width: 100%; 
+    min-height: 160px;
+    height: auto !important;
+    border-radius: 16px; 
+    filter: grayscale(0%) !important; 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .panel-content {
+    position: relative;
+    padding: 20px;
+    height: 100%;
+  }
+
+  .panel-desc { 
+    opacity: 1 !important; 
+    max-height: 300px !important; 
+    margin-top: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
 
   .community-marquee-header { flex-direction: column; align-items: center; gap: 16px; text-align: center; }
 }
@@ -262,20 +362,23 @@
   .btn-hero-primary { width: 100%; padding: 14px; text-align: center; }
   .btn-hero-link { text-align: center; margin-top: 4px; }
 
-  .hero-graphic-wrap { height: 300px; width: 100%; }
-  .notebook-card { width: 100%; height: 260px; padding: 16px; border-radius: 16px; }
-  .floating-card { display: none !important; }
+  .hero-graphic-wrap { height: 320px; width: 100%; }
+  .notebook-card { width: 90%; height: 240px; padding: 16px; border-radius: 16px; }
+
+  .floating-card {
+    display: flex !important;
+    font-size: 10px;
+    padding: 6px 12px;
+  }
+  .float-pdf { top: 2%; left: 0%; }
+  .float-audio { top: 12%; right: -2%; }
+  .float-doc { bottom: 12%; left: -2%; }
+  .float-video { bottom: 2%; right: 0%; }
 
   .source-card, .output-card { padding: 14px 16px; font-size: 13px; text-align: center; justify-content: center; }
   .central-svg-stream { height: 60px; }
   .notebook-sphere-core { width: 90px; height: 90px; }
   .sphere-content-box h4 { font-size: 11px; }
-
-  .accordion-panel { height: 100px; border-radius: 14px; }
-  .accordion-panel.active { height: 200px; }
-  .panel-content { padding: 16px; }
-  .panel-text-block h3 { font-size: 16px; margin-bottom: 4px; }
-  .panel-text-block p { font-size: 13px; line-height: 1.4; }
 
   .marquee-card { width: calc(100vw - 32px) !important; max-width: 360px; padding: 16px; }
   .marquee-card-title { font-size: 15px; }

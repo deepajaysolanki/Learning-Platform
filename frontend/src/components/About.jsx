@@ -1,9 +1,3 @@
-/**
- * @file About.jsx
- * @description About page for VibeStudy. Features robust GSAP timeline sequencing
- * across every section, dynamic scroll triggers, and a fully responsive layout.
- */
-
 import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { gsap } from "gsap";
@@ -13,6 +7,9 @@ import "../styles/About.css";
 
 // Register ScrollTrigger plugin safely
 gsap.registerPlugin(ScrollTrigger);
+
+// Turn off null target warnings globally for GSAP
+gsap.config({ nullTargetWarn: false });
 
 export default function About() {
   const navigate = useNavigate();
@@ -30,37 +27,29 @@ export default function About() {
   // GSAP MASTER ANIMATION ENGINE
   // =========================================================================
   useEffect(() => {
-    // Force a clean layout calculation before binding animations
     ScrollTrigger.refresh();
 
     const ctx = gsap.context(() => {
       // --- 1. HERO SECTION TIMELINE ---
       if (heroRef.current) {
+        const tag = heroRef.current.querySelector(".about-tag");
+        const title = heroRef.current.querySelector(".about-title");
+        const subtitle = heroRef.current.querySelector(".about-subtitle");
+
         const tlHero = gsap.timeline({
           defaults: { ease: "power3.out", duration: 0.8 },
         });
-        tlHero
-          .fromTo(
-            ".about-tag",
-            { opacity: 0, y: -20 },
-            { opacity: 1, y: 0, delay: 0.1 },
-          )
-          .fromTo(
-            ".about-title",
-            { opacity: 0, y: 30 },
-            { opacity: 1, y: 0 },
-            "-=0.6",
-          )
-          .fromTo(
-            ".about-subtitle",
-            { opacity: 0, y: 20 },
-            { opacity: 1, y: 0 },
-            "-=0.6",
-          );
+
+        if (tag) tlHero.fromTo(tag, { opacity: 0, y: -20 }, { opacity: 1, y: 0, delay: 0.1 });
+        if (title) tlHero.fromTo(title, { opacity: 0, y: 30 }, { opacity: 1, y: 0 }, "-=0.6");
+        if (subtitle) tlHero.fromTo(subtitle, { opacity: 0, y: 20 }, { opacity: 1, y: 0 }, "-=0.6");
       }
 
       // --- 2. MISSION SECTION TIMELINE ---
       if (missionRef.current) {
+        const leftElements = missionRef.current.querySelectorAll(".mission-left-pane > *");
+        const pillars = missionRef.current.querySelectorAll(".pillar-card");
+
         const tlMission = gsap.timeline({
           scrollTrigger: {
             trigger: missionRef.current,
@@ -68,34 +57,30 @@ export default function About() {
             invalidateOnRefresh: true,
           },
         });
-        tlMission
-          .fromTo(
-            ".mission-left-pane > *",
+
+        if (leftElements.length > 0) {
+          tlMission.fromTo(
+            leftElements,
             { opacity: 0, y: 30 },
-            {
-              opacity: 1,
-              y: 0,
-              stagger: 0.1,
-              duration: 0.6,
-              ease: "power3.out",
-            },
-          )
-          .fromTo(
-            ".pillar-card",
-            { opacity: 0, y: 40 },
-            {
-              opacity: 1,
-              y: 0,
-              stagger: 0.15,
-              duration: 0.7,
-              ease: "power2.out",
-            },
-            "-=0.4",
+            { opacity: 1, y: 0, stagger: 0.1, duration: 0.6, ease: "power3.out" }
           );
+        }
+
+        if (pillars.length > 0) {
+          tlMission.fromTo(
+            pillars,
+            { opacity: 0, y: 40 },
+            { opacity: 1, y: 0, stagger: 0.15, duration: 0.7, ease: "power2.out" },
+            "-=0.4"
+          );
+        }
       }
 
       // --- 3. TEAM / FOUNDER SECTION TIMELINE ---
       if (teamRef.current) {
+        const teamTitles = teamRef.current.querySelectorAll(".section-label-center, .team-section-title");
+        const founderCard = teamRef.current.querySelector(".founder-card");
+
         const tlTeam = gsap.timeline({
           scrollTrigger: {
             trigger: teamRef.current,
@@ -103,34 +88,31 @@ export default function About() {
             invalidateOnRefresh: true,
           },
         });
-        tlTeam
-          .fromTo(
-            ".team-container > .section-label-center, .team-section-title",
+
+        if (teamTitles.length > 0) {
+          tlTeam.fromTo(
+            teamTitles,
             { opacity: 0, y: 30 },
-            {
-              opacity: 1,
-              y: 0,
-              stagger: 0.1,
-              duration: 0.6,
-              ease: "power3.out",
-            },
-          )
-          .fromTo(
-            ".founder-card",
-            { opacity: 0, scale: 0.95, y: 30 },
-            {
-              opacity: 1,
-              scale: 1,
-              y: 0,
-              duration: 0.8,
-              ease: "back.out(1.2)",
-            },
-            "-=0.4",
+            { opacity: 1, y: 0, stagger: 0.1, duration: 0.6, ease: "power3.out" }
           );
+        }
+
+        if (founderCard) {
+          tlTeam.fromTo(
+            founderCard,
+            { opacity: 0, scale: 0.95, y: 30 },
+            { opacity: 1, scale: 1, y: 0, duration: 0.8, ease: "back.out(1.2)" },
+            "-=0.4"
+          );
+        }
       }
 
       // --- 4. CTA BANNER TIMELINE ---
       if (ctaRef.current) {
+        const heading = ctaRef.current.querySelector(".about-cta-container h2");
+        const text = ctaRef.current.querySelector(".about-cta-container p");
+        const actions = ctaRef.current.querySelectorAll(".about-cta-actions > *");
+
         const tlCTA = gsap.timeline({
           scrollTrigger: {
             trigger: ctaRef.current,
@@ -138,30 +120,17 @@ export default function About() {
             invalidateOnRefresh: true,
           },
         });
-        tlCTA
-          .fromTo(
-            ".about-cta-container h2",
-            { opacity: 0, y: 30 },
-            { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
-          )
-          .fromTo(
-            ".about-cta-container p",
+
+        if (heading) tlCTA.fromTo(heading, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" });
+        if (text) tlCTA.fromTo(text, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, "-=0.4");
+        if (actions.length > 0) {
+          tlCTA.fromTo(
+            actions,
             { opacity: 0, y: 20 },
-            { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
-            "-=0.4",
-          )
-          .fromTo(
-            ".about-cta-actions > *",
-            { opacity: 0, y: 20 },
-            {
-              opacity: 1,
-              y: 0,
-              stagger: 0.1,
-              duration: 0.6,
-              ease: "power3.out",
-            },
-            "-=0.4",
+            { opacity: 1, y: 0, stagger: 0.1, duration: 0.6, ease: "power3.out" },
+            "-=0.4"
           );
+        }
       }
     }, pageRef);
 
@@ -202,9 +171,7 @@ export default function About() {
       </Helmet>
 
       <div className="about-page-wrapper" ref={pageRef}>
-        {/* ==========================================
-            SECTION 1: HERO
-            ========================================== */}
+        {/* SECTION 1: HERO */}
         <section className="about-hero" ref={heroRef}>
           <div className="about-hero-container">
             <span className="about-tag">OUR STORY</span>
@@ -221,9 +188,7 @@ export default function About() {
           </div>
         </section>
 
-        {/* ==========================================
-            SECTION 2: MISSION
-            ========================================== */}
+        {/* SECTION 2: MISSION */}
         <section className="mission-section" ref={missionRef}>
           <div className="mission-container">
             <div className="mission-left-pane">
@@ -254,9 +219,7 @@ export default function About() {
           </div>
         </section>
 
-        {/* ==========================================
-            SECTION 3: TEAM / FOUNDER
-            ========================================== */}
+        {/* SECTION 3: TEAM / FOUNDER */}
         <section className="team-section" ref={teamRef}>
           <div className="team-container">
             <span className="section-label-center">THE TEAM</span>
@@ -284,7 +247,7 @@ export default function About() {
                 {/* SOCIAL BUTTONS FOOTER */}
                 <div className="founder-card-footer">
                   <a
-                    href="https://github.com"
+                    href="https://github.com/deepajaysolanki"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="social-footer-btn github"
@@ -294,17 +257,13 @@ export default function About() {
                       width="16"
                       height="16"
                       viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                      fill="currentColor"
                     >
-                      <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                      <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.082.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 3.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
                     </svg>
                   </a>
                   <a
-                    href="https://x.com"
+                    href="https://x.com/deepSolankii_"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="social-footer-btn twitter"
@@ -312,20 +271,12 @@ export default function About() {
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      fill="#000000"
-                      class="bi bi-twitter-x"
+                      fill="currentColor"
                       viewBox="0 0 16 16"
-                      id="Twitter-X--Streamline-Bootstrap"
                       height="16"
                       width="16"
                     >
-                      <desc>
-                        Twitter X Streamline Icon: https://streamlinehq.com
-                      </desc>
-                      <path
-                        d="M12.6 0.75h2.454l-5.36 6.142L16 15.25h-4.937l-3.867 -5.07 -4.425 5.07H0.316l5.733 -6.57L0 0.75h5.063l3.495 4.633L12.601 0.75Zm-0.86 13.028h1.36L4.323 2.145H2.865z"
-                        stroke-width="1"
-                      ></path>
+                      <path d="M12.6 0.75h2.454l-5.36 6.142L16 15.25h-4.937l-3.867 -5.07 -4.425 5.07H0.316l5.733 -6.57L0 0.75h5.063l3.495 4.633L12.601 0.75Zm-0.86 13.028h1.36L4.323 2.145H2.865z" />
                     </svg>
                   </a>
                 </div>
@@ -334,9 +285,7 @@ export default function About() {
           </div>
         </section>
 
-        {/* ==========================================
-            SECTION 4: CTA BANNER
-            ========================================== */}
+        {/* SECTION 4: CTA BANNER */}
         <section className="about-cta-section" ref={ctaRef}>
           <div className="about-cta-container">
             <div className="cta-glow-effect"></div>

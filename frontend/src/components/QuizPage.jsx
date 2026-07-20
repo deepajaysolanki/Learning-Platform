@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { gsap } from "gsap";
+import { Helmet } from "react-helmet-async";
+import "../styles/QuizPage.css"; // 🟢 Import external stylesheet
+
+// Turn off null target warnings safely
+gsap.config({ nullTargetWarn: false });
 
 export default function QuizPage() {
   const { id } = useParams();
@@ -17,7 +22,9 @@ export default function QuizPage() {
 
   const getCorrectOptionIndex = (question) => {
     const options = Array.isArray(question?.options) ? question.options : [];
-    const normalizedOptions = options.map((option) => normalizeText(option).toUpperCase());
+    const normalizedOptions = options.map((option) =>
+      normalizeText(option).toUpperCase(),
+    );
     const answerValue = normalizeText(question?.answerOption).toUpperCase();
 
     if (answerValue.length === 1 && /[A-Z]/.test(answerValue)) {
@@ -37,6 +44,7 @@ export default function QuizPage() {
     setIsSubmitted(false);
     setUserAnswers({});
     setScore(0);
+
     try {
       const response = await fetch(
         `https://vibestudy-backend-o61q.onrender.com/notebook/${id}/quiz`,
@@ -62,12 +70,17 @@ export default function QuizPage() {
 
   // GSAP Animation for smooth entry
   useEffect(() => {
-    if (quiz.length > 0) {
-      gsap.fromTo(
+    if (quiz.length > 0 && quizContainerRef.current) {
+      const cards = quizContainerRef.current.querySelectorAll(
         ".quiz-question-card",
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, stagger: 0.1, duration: 0.5 },
       );
+      if (cards.length > 0) {
+        gsap.fromTo(
+          cards,
+          { opacity: 0, y: 30 },
+          { opacity: 1, y: 0, stagger: 0.1, duration: 0.5, ease: "power2.out" },
+        );
+      }
     }
   }, [quiz]);
 
@@ -89,9 +102,15 @@ export default function QuizPage() {
 
       if (correctIndex >= 0 && selectedIndex === correctIndex) {
         currentScore += 1;
-      } else if (correctIndex < 0 && selected === normalizeText(q.answerOption)) {
+      } else if (
+        correctIndex < 0 &&
+        selected === normalizeText(q.answerOption)
+      ) {
         currentScore += 1;
-      } else if (correctIndex >= 0 && selected === normalizeText(q.options?.[correctIndex])) {
+      } else if (
+        correctIndex >= 0 &&
+        selected === normalizeText(q.options?.[correctIndex])
+      ) {
         currentScore += 1;
       }
     });
@@ -102,177 +121,128 @@ export default function QuizPage() {
   };
 
   return (
-    <div
-      style={{
-        padding: "40px",
-        maxWidth: "800px",
-        margin: "0 auto",
-        fontFamily: "sans-serif",
-      }}
-    >
-      <button
-        onClick={() => navigate(-1)}
-        style={{
-          padding: "8px 16px",
-          cursor: "pointer",
-          borderRadius: "8px",
-          border: "1px solid #cbd5e1",
-          backgroundColor: "white",
-        }}
-      >
-        ← Back to Notebook
-      </button>
-
-      {quiz.length === 0 && !loading && (
-        <div style={{ textAlign: "center", padding: "60px 20px" }}>
-          <h2>Ready to test yourself?</h2>
-          <button
-            onClick={generateQuiz}
-            style={{
-              padding: "12px 24px",
-              backgroundColor: "#6366f1",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-            }}
-          >
-            Start 10-Question Quiz
-          </button>
-        </div>
-      )}
-
-      {loading && (
-        <div style={{ textAlign: "center", margin: "60px 0" }}>
-          ⏳ Generating questions...
-        </div>
-      )}
-
-      <div
-        ref={quizContainerRef}
-        style={{ display: "flex", flexDirection: "column", gap: "24px" }}
-      >
-        {quiz.map((q, index) => (
-          <div
-            key={index}
-            className="quiz-question-card"
-            style={{
-              backgroundColor: "white",
-              padding: "24px",
-              borderRadius: "12px",
-              border: "1px solid #e2e8f0",
-            }}
-          >
-            <h3>
-              {index + 1}. {q.question}
-            </h3>
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "10px" }}
-            >
-              {q.options.map((option, oIndex) => {
-                const selectedValue = normalizeText(userAnswers[index]);
-                const optionValue = normalizeText(option);
-                const answerValue = normalizeText(q.answerOption);
-                const correctIndex = getCorrectOptionIndex(q);
-                const selectedIndex =
-                  selectedValue.length === 1 && /[A-Z]/.test(selectedValue.toUpperCase())
-                    ? selectedValue.toUpperCase().charCodeAt(0) - 65
-                    : -1;
-                const isSelected = selectedValue === optionValue || selectedIndex === oIndex;
-                const isCorrect =
-                  correctIndex >= 0
-                    ? oIndex === correctIndex
-                    : answerValue === optionValue || answerValue === String(oIndex + 1);
-
-                let bgColor = "#f8fafc";
-                let borderColor = "#cbd5e1";
-
-                if (isSubmitted) {
-                  if (isCorrect) {
-                    bgColor = "#dcfce7";
-                    borderColor = "#22c55e";
-                  } else if (isSelected) {
-                    bgColor = "#fee2e2";
-                    borderColor = "#ef4444";
-                  }
-                } else if (isSelected) {
-                  bgColor = "#eef2ff";
-                  borderColor = "#6366f1";
-                }
-
-                return (
-                  <button
-                    key={oIndex}
-                    onClick={() => handleOptionSelect(index, option)}
-                    disabled={isSubmitted}
-                    style={{
-                      padding: "16px",
-                      textAlign: "left",
-                      backgroundColor: bgColor,
-                      border: `2px solid ${borderColor}`,
-                      borderRadius: "8px",
-                      cursor: isSubmitted ? "default" : "pointer",
-                    }}
-                  >
-                    {option}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-
-        {quiz.length > 0 && !isSubmitted && (
-          <button
-            onClick={calculateScore}
-            style={{
-              padding: "16px",
-              backgroundColor: "#16a34a",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-            }}
-          >
-            Submit Answers
-          </button>
-        )}
-
-        {quiz.length > 0 && isSubmitted && (
-          <div
-            style={{
-              padding: "20px",
-              borderRadius: "12px",
-              backgroundColor: "#f8fafc",
-              border: "1px solid #e2e8f0",
-            }}
-          >
-            <h3 style={{ marginTop: 0 }}>Quiz Result</h3>
-            <p style={{ fontSize: "18px", fontWeight: 600 }}>
-              You scored {score} out of {quiz.length}
-            </p>
-            <p style={{ color: "#475569" }}>
-              {score === quiz.length
-                ? "Perfect score!"
-                : score > 0
-                  ? "Nice work. Review the highlighted answers and try again."
-                  : "No correct answers this time. Review the explanations and try again."}
-            </p>
-            <button
-              onClick={generateQuiz}
-              style={{
-                padding: "10px 16px",
-                backgroundColor: "#6366f1",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                cursor: "pointer",
-              }}
-            >
-              Try Another Quiz
+    <>
+      <Helmet>
+        <title>VibeStudy - Play Quiz</title>
+        <meta charSet="utf-8" />
+      </Helmet>
+      <div className="quiz-page-wrapper">
+        <div className="quiz-container">
+          <div className="quiz-top-bar">
+            <button className="btn-quiz-back" onClick={() => navigate(-1)}>
+              ← Back to Notebook
             </button>
           </div>
-        )}
+
+          {/* HERO WELCOME CARD */}
+          {quiz.length === 0 && !loading && (
+            <div className="quiz-welcome-card">
+              <div className="quiz-welcome-icon">🎯</div>
+              <h2>Ready to test your knowledge?</h2>
+              <p>
+                Generate a customized 10-question multiple-choice quiz based on
+                your notebook contents.
+              </p>
+              <button className="btn-start-quiz" onClick={generateQuiz}>
+                Start Quiz
+              </button>
+            </div>
+          )}
+
+          {/* LOADING STATE */}
+          {loading && (
+            <div className="quiz-loading-box">
+              <div className="loading-spinner-text">
+                ⏳ Generating tailored questions...
+              </div>
+            </div>
+          )}
+
+          {/* RESULTS BANNER */}
+          {quiz.length > 0 && isSubmitted && (
+            <div className="quiz-results-card">
+              <h3 className="results-header-text">Quiz Complete!</h3>
+              <div className="score-display-box">
+                <span className="score-num">{score}</span>
+                <span className="score-total">/ {quiz.length}</span>
+              </div>
+              <p className="results-feedback">
+                {score === quiz.length
+                  ? "🎉 Perfect score! Mastered!"
+                  : score > 0
+                    ? "👍 Good attempt! Review highlighted answers below."
+                    : "📚 Review the material and give it another shot!"}
+              </p>
+              <button className="btn-start-quiz" onClick={generateQuiz}>
+                Try Another Quiz
+              </button>
+            </div>
+          )}
+
+          {/* QUESTIONS LIST */}
+          <div ref={quizContainerRef} className="questions-list">
+            {quiz.map((q, index) => (
+              <div key={index} className="quiz-question-card">
+                <div className="question-header">
+                  <span className="q-number-badge">Q{index + 1}</span>
+                  <h3 className="question-text">{q.question}</h3>
+                </div>
+
+                <div className="options-grid">
+                  {q.options.map((option, oIndex) => {
+                    const selectedValue = normalizeText(userAnswers[index]);
+                    const optionValue = normalizeText(option);
+                    const answerValue = normalizeText(q.answerOption);
+                    const correctIndex = getCorrectOptionIndex(q);
+                    const selectedIndex =
+                      selectedValue.length === 1 &&
+                      /[A-Z]/.test(selectedValue.toUpperCase())
+                        ? selectedValue.toUpperCase().charCodeAt(0) - 65
+                        : -1;
+                    const isSelected =
+                      selectedValue === optionValue || selectedIndex === oIndex;
+                    const isCorrect =
+                      correctIndex >= 0
+                        ? oIndex === correctIndex
+                        : answerValue === optionValue ||
+                          answerValue === String(oIndex + 1);
+
+                    let optionClass = "option-btn";
+                    if (isSubmitted) {
+                      if (isCorrect) optionClass += " correct";
+                      else if (isSelected) optionClass += " wrong";
+                    } else if (isSelected) {
+                      optionClass += " selected";
+                    }
+
+                    const optionLetter = String.fromCharCode(65 + oIndex);
+
+                    return (
+                      <button
+                        key={oIndex}
+                        className={optionClass}
+                        onClick={() => handleOptionSelect(index, option)}
+                        disabled={isSubmitted}
+                      >
+                        <span className="option-letter-badge">
+                          {optionLetter}
+                        </span>
+                        <span>{option}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
+            {quiz.length > 0 && !isSubmitted && (
+              <button className="btn-submit-quiz" onClick={calculateScore}>
+                Submit Answers
+              </button>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

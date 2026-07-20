@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import "../styles/UserDashboard.css"; // 🟢 Import external CSS
 
-// 🟢 REUSABLE INTERACTIVE LIKE BUTTON FOR DASHBOARD
+// 🟢 REUSABLE INTERACTIVE LIKE BUTTON
 const DashLikeButton = ({ notebookId, initialLikes, initialIsLiked }) => {
   const [likes, setLikes] = useState(initialLikes || 0);
   const [isLiked, setIsLiked] = useState(initialIsLiked || false);
@@ -35,7 +36,6 @@ const DashLikeButton = ({ notebookId, initialLikes, initialIsLiked }) => {
         setLikes(data.likes);
         setIsLiked(data.isLiked);
       } else {
-        // Rollback on error
         setLikes(initialLikes || 0);
         setIsLiked(initialIsLiked || false);
       }
@@ -49,22 +49,10 @@ const DashLikeButton = ({ notebookId, initialLikes, initialIsLiked }) => {
   return (
     <button
       type="button"
+      className="like-button"
       onClick={handleToggleLike}
       title={isLiked ? "Unlike Notebook" : "Like Notebook"}
-      style={{
-        background: "none",
-        border: "none",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        gap: "6px",
-        color: isLiked ? "#ff4757" : "#64748b",
-        fontSize: "14px",
-        fontWeight: "600",
-        padding: "4px 8px",
-        borderRadius: "6px",
-        transition: "all 0.15s ease",
-      }}
+      style={{ color: isLiked ? "#ff4757" : "#64748b" }}
     >
       <svg
         width="18"
@@ -201,12 +189,7 @@ export default function UserDashboard() {
 
   // --- DELETE MY NOTEBOOK ---
   const handleDeleteNotebook = async (notebookId) => {
-    if (
-      !window.confirm(
-        "Are you sure you want to delete this notebook? This cannot be undone."
-      )
-    )
-      return;
+    if (!window.confirm("Are you sure you want to delete this notebook? This cannot be undone.")) return;
 
     const token = localStorage.getItem("studyAppToken");
     try {
@@ -276,11 +259,7 @@ export default function UserDashboard() {
     : [];
 
   if (loading) {
-    return (
-      <div style={{ padding: "40px", textAlign: "center", fontFamily: "sans-serif" }}>
-        Loading your dashboard...
-      </div>
-    );
+    return <div className="dashboard-loading">Loading your dashboard...</div>;
   }
 
   const pageTitle =
@@ -291,130 +270,51 @@ export default function UserDashboard() {
       : "Profile Settings";
 
   return (
-    <div
-      style={{
-        display: "flex",
-        minHeight: "100vh",
-        backgroundColor: "#f8fafc",
-        fontFamily: "sans-serif",
-      }}
-    >
+    <div className="dashboard-container">
       <Helmet>
         <title>{pageTitle} | Quizolve</title>
         <meta name="description" content="Manage your Quizolve account and notebooks." />
       </Helmet>
 
-      {/* 🟢 SIDEBAR 🟢 */}
-      <div
-        style={{
-          width: "250px",
-          flexShrink: 0,
-          borderRight: "1px solid #e2e8f0",
-          backgroundColor: "#ffffff",
-        }}
-      >
-        <div
-          style={{
-            width: "250px",
-            backgroundColor: "#ffffff",
-            borderRight: "1px solid #e2e8f0",
-            padding: "20px",
-            display: "flex",
-            flexDirection: "column",
-            position: "sticky",
-            top: 0,
-            height: "100vh",
-            overflowY: "auto",
-            boxSizing: "border-box",
-          }}
-        >
-          <h2 style={{ color: "#0f172a", marginBottom: "40px", fontSize: "20px" }}>
+      {/* SIDEBAR */}
+      <div className="dashboard-sidebar-wrapper">
+        <div className="dashboard-sidebar">
+          <h2 className="sidebar-heading">
             Welcome, {userData?.username || "User"}!
           </h2>
 
-          <nav style={{ display: "flex", flexDirection: "column", gap: "10px", flex: 1 }}>
+          <nav className="sidebar-nav">
             <button
               onClick={() => setActiveTab("settings")}
-              style={{
-                padding: "12px 16px",
-                textAlign: "left",
-                borderRadius: "8px",
-                border: "none",
-                cursor: "pointer",
-                fontWeight: "bold",
-                backgroundColor: activeTab === "settings" ? "#eef2ff" : "transparent",
-                color: activeTab === "settings" ? "#6366f1" : "#64748b",
-              }}
+              className={`sidebar-btn ${activeTab === "settings" ? "active" : ""}`}
             >
               ⚙️ Profile Settings
             </button>
 
             <button
               onClick={() => setActiveTab("notebooks")}
-              style={{
-                padding: "12px 16px",
-                textAlign: "left",
-                borderRadius: "8px",
-                border: "none",
-                cursor: "pointer",
-                fontWeight: "bold",
-                backgroundColor: activeTab === "notebooks" ? "#eef2ff" : "transparent",
-                color: activeTab === "notebooks" ? "#6366f1" : "#64748b",
-              }}
+              className={`sidebar-btn ${activeTab === "notebooks" ? "active" : ""}`}
             >
               📚 My Notebooks
             </button>
 
             <button
               onClick={() => setActiveTab("saved")}
-              style={{
-                padding: "12px 16px",
-                textAlign: "left",
-                borderRadius: "8px",
-                border: "none",
-                cursor: "pointer",
-                fontWeight: "bold",
-                backgroundColor: activeTab === "saved" ? "#eef2ff" : "transparent",
-                color: activeTab === "saved" ? "#6366f1" : "#64748b",
-              }}
+              className={`sidebar-btn ${activeTab === "saved" ? "active" : ""}`}
             >
               🔖 Saved Notebooks
             </button>
 
-            {/* 🟢 ADMIN PANEL LINK (Appears only if user is Admin) */}
             {userData?.role === "admin" && (
               <button
                 onClick={() => navigate("/admin/dashboard")}
-                style={{
-                  padding: "12px 16px",
-                  textAlign: "left",
-                  borderRadius: "8px",
-                  border: "none",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  backgroundColor: "#0f172a",
-                  color: "#38bdf8",
-                  marginTop: "10px",
-                }}
+                className="sidebar-btn-admin"
               >
                 🛡️ Admin Panel
               </button>
             )}
 
-            <button
-              onClick={handleLogout}
-              style={{
-                padding: "12px 16px",
-                textAlign: "left",
-                borderRadius: "8px",
-                border: "none",
-                cursor: "pointer",
-                fontWeight: "bold",
-                backgroundColor: "#fee2e2",
-                color: "#ef4444",
-                marginTop: "45vh",
-              }}
-            >
+            <button onClick={handleLogout} className="sidebar-btn-logout">
               🚪 Logout
             </button>
           </nav>
@@ -422,23 +322,20 @@ export default function UserDashboard() {
       </div>
 
       {/* MAIN CONTENT AREA */}
-      <div style={{ flex: 1, padding: "40px" }}>
-        <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+      <div className="dashboard-main">
+        <div className="dashboard-content-wrapper">
           
           {/* TAB 1: MY NOTEBOOKS */}
           {activeTab === "notebooks" && (
             <div>
-              <h1 style={{ color: "#0f172a", marginBottom: "8px", fontSize: "32px", fontWeight: "800" }}>
-                My Notebooks
-              </h1>
-              <p style={{ color: "#64748b", marginBottom: "30px", fontSize: "15px" }}>
-                Manage your private and public collections
-              </p>
+              <h1 className="dash-title">My Notebooks</h1>
+              <p className="dash-subtitle">Manage your private and public collections</p>
 
               {/* SEARCH & FILTER ROW */}
-              <div style={{ display: "flex", gap: "16px", marginBottom: "30px", width: "100%" }}>
-                <div style={{ flex: 1, position: "relative" }}>
+              <div className="search-filter-row">
+                <div className="search-input-wrapper">
                   <svg
+                    className="search-icon"
                     width="18"
                     height="18"
                     viewBox="0 0 24 24"
@@ -447,50 +344,23 @@ export default function UserDashboard() {
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    style={{
-                      position: "absolute",
-                      left: "16px",
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                    }}
                   >
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                   </svg>
                   <input
                     type="text"
+                    className="dash-search-input"
                     placeholder="Search my notebooks..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "14px 14px 14px 44px",
-                      borderRadius: "10px",
-                      border: "1px solid #e2e8f0",
-                      fontSize: "15px",
-                      color: "#334155",
-                      outline: "none",
-                      boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
-                      boxSizing: "border-box",
-                    }}
                   />
                 </div>
 
                 <select
+                  className="dash-filter-select"
                   value={visibilityFilter}
                   onChange={(e) => setVisibilityFilter(e.target.value)}
-                  style={{
-                    padding: "14px 20px",
-                    borderRadius: "10px",
-                    border: "1px solid #e2e8f0",
-                    backgroundColor: "white",
-                    fontSize: "15px",
-                    color: "#334155",
-                    cursor: "pointer",
-                    outline: "none",
-                    minWidth: "160px",
-                    boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
-                  }}
                 >
                   <option value="All Notebooks">All Notebooks</option>
                   <option value="Public Only">Public Only</option>
@@ -499,69 +369,33 @@ export default function UserDashboard() {
               </div>
 
               {notebookError && (
-                <div style={{ padding: "10px", backgroundColor: "#fee2e2", color: "#991b1b", borderRadius: "6px", marginBottom: "20px" }}>
-                  ⚠️ {notebookError}
-                </div>
+                <div className="dash-error-banner">⚠️ {notebookError}</div>
               )}
 
               {loadingNotebooks ? (
-                <div style={{ textAlign: "center", padding: "40px", color: "#6366f1", fontWeight: "bold" }}>
-                  ⏳ Loading your notebooks...
-                </div>
+                <div className="dash-loading-state">⏳ Loading your notebooks...</div>
               ) : filteredNotebooks.length === 0 ? (
-                <div style={{ padding: "40px", backgroundColor: "white", borderRadius: "12px", border: "1px dashed #cbd5e1", textAlign: "center" }}>
-                  <h3 style={{ color: "#334155" }}>No Notebooks Found</h3>
-                  <p style={{ color: "#64748b" }}>
-                    {myNotebooks.length === 0 ? "You haven't created any study materials yet." : "No notebooks match your search."}
+                <div className="dash-empty-state">
+                  <h3>No Notebooks Found</h3>
+                  <p>
+                    {myNotebooks.length === 0
+                      ? "You haven't created any study materials yet."
+                      : "No notebooks match your search."}
                   </p>
-                  <button
-                    onClick={() => navigate("/notebooks")}
-                    style={{
-                      marginTop: "15px",
-                      padding: "10px 20px",
-                      backgroundColor: "#6366f1",
-                      color: "white",
-                      borderRadius: "8px",
-                      border: "none",
-                      cursor: "pointer",
-                      fontWeight: "bold",
-                    }}
-                  >
+                  <button onClick={() => navigate("/notebooks")} className="dash-primary-btn">
                     Create Notebook
                   </button>
                 </div>
               ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(450px, 1fr))", gap: "24px" }}>
+                <div className="notebooks-grid">
                   {filteredNotebooks.map((notebook, index) => {
                     const isPublic = notebook.isPublic || notebook.visibility === "public";
                     const notebookId = notebook._id || notebook.id;
 
                     return (
-                      <div
-                        key={notebookId || index}
-                        style={{
-                          backgroundColor: "white",
-                          padding: "24px",
-                          borderRadius: "16px",
-                          border: "1px solid #e2e8f0",
-                          display: "flex",
-                          flexDirection: "column",
-                          boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
-                        }}
-                      >
-                        <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
-                          <div
-                            style={{
-                              width: "48px",
-                              height: "48px",
-                              borderRadius: "12px",
-                              backgroundColor: "#eff6ff",
-                              display: "flex",
-                              justifyContent: "center",
-                              alignItems: "center",
-                              flexShrink: 0,
-                            }}
-                          >
+                      <div key={notebookId || index} className="notebook-card">
+                        <div className="card-header">
+                          <div className="card-icon-box blue">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                               <path
                                 d="M4 19V5C4 3.89543 4.89543 3 6 3H19C19.5523 3 20 3.44772 20 4V20C20 20.5523 19.5523 21 19 21H6C4.89543 21 4 20.1046 4 19ZM4 19C4 20.1046 4.89543 21 6 21H19"
@@ -580,86 +414,60 @@ export default function UserDashboard() {
                             </svg>
                           </div>
                           <div>
-                            <h3 style={{ margin: "0 0 8px 0", color: "#0f172a", fontSize: "22px", fontWeight: "800", lineHeight: "1.2" }}>
+                            <h3 className="card-title">
                               {notebook.title || "Untitled Notebook"}
                             </h3>
-
-                            <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#64748b", fontSize: "14px", fontWeight: "500" }}>
+                            <div className="visibility-badge">
                               {isPublic ? (
                                 <>
-                                  <span style={{ color: "#22c55e", fontSize: "10px" }}>🟢</span> Public
+                                  <span className="badge-dot">🟢</span> Public
                                 </>
                               ) : (
                                 <>
-                                  <span style={{ fontSize: "12px" }}>🔒</span> Private
+                                  <span>🔒</span> Private
                                 </>
                               )}
                             </div>
                           </div>
                         </div>
 
-                        <div style={{ backgroundColor: "#f8fafc", borderRadius: "12px", padding: "20px", marginTop: "20px", flex: 1 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-                            <div style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#2563eb" }}></div>
-                            <span style={{ color: "#2563eb", fontWeight: "bold", fontSize: "15px" }}>Summary</span>
+                        <div className="card-summary-box">
+                          <div className="summary-header">
+                            <div className="summary-dot"></div>
+                            <span className="summary-label">Summary</span>
                           </div>
-                          <p style={{ margin: 0, color: "#475569", fontSize: "15px", lineHeight: "1.6" }}>
+                          <p className="summary-text">
                             {notebook.description || notebook.summary || "No description provided."}
                           </p>
                         </div>
 
-                        {/* MAIN ACTION GRID */}
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "24px" }}>
+                        <div className="card-actions-grid">
                           <button
                             onClick={() => navigate(`/notebook/${notebookId}/study`)}
-                            style={{ padding: "12px", backgroundColor: "white", border: "1px solid #e2e8f0", borderRadius: "8px", color: "#334155", fontWeight: "500", cursor: "pointer", fontSize: "14px" }}
+                            className="btn-card-action"
                           >
                             Open
                           </button>
                           <button
                             onClick={() => navigate(`/notebook/${notebookId}/quiz`)}
-                            style={{ padding: "12px", backgroundColor: "white", border: "1px solid #e2e8f0", borderRadius: "8px", color: "#334155", fontWeight: "500", cursor: "pointer", fontSize: "14px" }}
+                            className="btn-card-action"
                           >
                             Quiz
                           </button>
                         </div>
 
-                        {/* CARD FOOTER: LIKES + DELETE BUTTON + USERNAME */}
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            marginTop: "16px",
-                            paddingTop: "16px",
-                            borderTop: "1px solid #f1f5f9",
-                          }}
-                        >
-                          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                        <div className="card-footer">
+                          <div className="footer-left-actions">
                             <DashLikeButton
                               notebookId={notebookId}
                               initialLikes={notebook.likes}
                               initialIsLiked={notebook.isLiked}
                             />
-
                             <button
                               type="button"
                               onClick={() => handleDeleteNotebook(notebookId)}
                               title="Delete Notebook"
-                              style={{
-                                background: "none",
-                                border: "none",
-                                cursor: "pointer",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "4px",
-                                color: "#ef4444",
-                                fontSize: "13px",
-                                fontWeight: "600",
-                                padding: "4px 8px",
-                                borderRadius: "6px",
-                                backgroundColor: "#fef2f2",
-                              }}
+                              className="btn-card-delete"
                             >
                               <svg
                                 width="16"
@@ -677,8 +485,7 @@ export default function UserDashboard() {
                               <span>Delete</span>
                             </button>
                           </div>
-
-                          <span style={{ fontSize: "13px", color: "#64748b", fontWeight: "600" }}>
+                          <span className="card-author-handle">
                             @{userData?.username || "You"}
                           </span>
                         </div>
@@ -693,131 +500,74 @@ export default function UserDashboard() {
           {/* TAB 2: SAVED NOTEBOOKS */}
           {activeTab === "saved" && (
             <div>
-              <h1 style={{ color: "#0f172a", marginBottom: "8px", fontSize: "32px", fontWeight: "800" }}>
-                Saved Notebooks
-              </h1>
-              <p style={{ color: "#64748b", marginBottom: "30px", fontSize: "15px" }}>
-                Community notebooks you have bookmarked for study
-              </p>
+              <h1 className="dash-title">Saved Notebooks</h1>
+              <p className="dash-subtitle">Community notebooks you have bookmarked for study</p>
 
               {savedNotebooks.length === 0 ? (
-                <div style={{ padding: "40px", backgroundColor: "white", borderRadius: "12px", border: "1px dashed #cbd5e1", textAlign: "center" }}>
-                  <h3 style={{ color: "#334155" }}>No Saved Notebooks</h3>
-                  <p style={{ color: "#64748b" }}>
-                    You haven't bookmarked any public notebooks yet.
-                  </p>
-                  <button
-                    onClick={() => navigate("/notebooks")}
-                    style={{
-                      marginTop: "15px",
-                      padding: "10px 20px",
-                      backgroundColor: "#6366f1",
-                      color: "white",
-                      borderRadius: "8px",
-                      border: "none",
-                      cursor: "pointer",
-                      fontWeight: "bold",
-                    }}
-                  >
+                <div className="dash-empty-state">
+                  <h3>No Saved Notebooks</h3>
+                  <p>You haven't bookmarked any public notebooks yet.</p>
+                  <button onClick={() => navigate("/notebooks")} className="dash-primary-btn">
                     Browse Community Feed
                   </button>
                 </div>
               ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(450px, 1fr))", gap: "24px" }}>
+                <div className="notebooks-grid">
                   {savedNotebooks.map((notebook, index) => {
                     const notebookId = notebook.id || notebook._id;
 
                     return (
-                      <div
-                        key={notebookId || index}
-                        style={{
-                          backgroundColor: "white",
-                          padding: "24px",
-                          borderRadius: "16px",
-                          border: "1px solid #e2e8f0",
-                          display: "flex",
-                          flexDirection: "column",
-                          boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
-                        }}
-                      >
-                        <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
-                          <div
-                            style={{
-                              width: "48px",
-                              height: "48px",
-                              borderRadius: "12px",
-                              backgroundColor: "#f0fdf4",
-                              display: "flex",
-                              justifyContent: "center",
-                              alignItems: "center",
-                              flexShrink: 0,
-                            }}
-                          >
+                      <div key={notebookId || index} className="notebook-card">
+                        <div className="card-header">
+                          <div className="card-icon-box green">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
                             </svg>
                           </div>
                           <div>
-                            <h3 style={{ margin: "0 0 8px 0", color: "#0f172a", fontSize: "22px", fontWeight: "800", lineHeight: "1.2" }}>
-                              {notebook.title}
-                            </h3>
-                            <span style={{ fontSize: "14px", color: "#64748b" }}>
-                              By {notebook.author}
-                            </span>
+                            <h3 className="card-title">{notebook.title}</h3>
+                            <span className="card-author-handle">By {notebook.author}</span>
                           </div>
                         </div>
 
-                        <div style={{ backgroundColor: "#f8fafc", borderRadius: "12px", padding: "20px", marginTop: "20px", flex: 1 }}>
-                          <span style={{ color: "#2563eb", fontWeight: "bold", fontSize: "14px", display: "block", marginBottom: "8px" }}>
+                        <div className="card-summary-box">
+                          <span className="summary-label" style={{ display: "block", marginBottom: "8px" }}>
                             Summary
                           </span>
-                          <p style={{ margin: 0, color: "#475569", fontSize: "15px", lineHeight: "1.6" }}>
+                          <p className="summary-text">
                             {notebook.summary || "No summary available."}
                           </p>
                         </div>
 
-                        {/* MAIN ACTION GRID */}
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginTop: "24px" }}>
+                        <div className="card-actions-grid three-col">
                           <button
                             onClick={() => navigate(`/notebook/${notebookId}/study`)}
-                            style={{ padding: "12px", backgroundColor: "#2563eb", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
+                            className="btn-card-action primary"
                           >
                             Open
                           </button>
                           <button
                             onClick={() => navigate(`/notebook/${notebookId}/quiz`)}
-                            style={{ padding: "12px", backgroundColor: "white", border: "1px solid #e2e8f0", borderRadius: "8px", color: "#334155", fontWeight: "500", cursor: "pointer", fontSize: "13px" }}
+                            className="btn-card-action"
                           >
                             Quiz
                           </button>
                           <button
                             onClick={() => handleRemoveSavedNotebook(notebookId)}
-                            style={{ padding: "12px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", color: "#dc2626", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
+                            className="btn-card-action danger"
                             title="Remove from saved notebooks"
                           >
                             Remove
                           </button>
                         </div>
 
-                        {/* FOOTER WITH INTERACTIVE LIKE BUTTON */}
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            marginTop: "16px",
-                            paddingTop: "16px",
-                            borderTop: "1px solid #f1f5f9",
-                          }}
-                        >
+                        <div className="card-footer">
                           <DashLikeButton
                             notebookId={notebookId}
                             initialLikes={notebook.likes}
                             initialIsLiked={notebook.isLiked}
                           />
-                          <span style={{ fontSize: "13px", color: "#64748b", fontWeight: "600" }}>
-                            {notebook.author}
-                          </span>
+                          <span className="card-author-handle">{notebook.author}</span>
                         </div>
                       </div>
                     );
@@ -830,24 +580,20 @@ export default function UserDashboard() {
           {/* TAB 3: PROFILE SETTINGS */}
           {activeTab === "settings" && (
             <div>
-              <h1 style={{ color: "#0f172a", marginBottom: "20px" }}>
-                Profile Settings
-              </h1>
-              
-              <div style={{ backgroundColor: "white", padding: "30px", borderRadius: "12px", border: "1px solid #e2e8f0", marginBottom: "24px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "20px", marginBottom: "30px", paddingBottom: "20px", borderBottom: "1px solid #f1f5f9" }}>
+              <h1 className="dash-title">Profile Settings</h1>
+
+              <div className="settings-card">
+                <div className="avatar-header-row">
                   <img
                     src={`https://ui-avatars.com/api/?name=${userData?.fullName || userData?.username || "User"}&background=6366f1&color=fff&size=80&bold=true`}
                     alt="Profile Avatar"
-                    style={{ width: "80px", height: "80px", borderRadius: "50%", border: "2px solid #eef2ff" }}
+                    className="settings-avatar"
                   />
                   <div>
-                    <h2 style={{ margin: "0 0 5px 0", color: "#0f172a" }}>
+                    <h2 className="user-display-name">
                       {userData?.fullName || userData?.username}
                     </h2>
-                    <p style={{ margin: 0, color: "#64748b" }}>
-                      Manage your personal information
-                    </p>
+                    <p className="user-display-sub">Manage your personal information</p>
                   </div>
                 </div>
 
@@ -878,59 +624,50 @@ export default function UserDashboard() {
                       alert("A network error occurred.");
                     }
                   }}
-                  style={{ display: "flex", flexDirection: "column", gap: "20px" }}
+                  className="form-group-col"
                 >
                   <div>
-                    <label style={{ display: "block", color: "#64748b", fontSize: "14px", marginBottom: "5px", fontWeight: "bold" }}>
-                      Full Name
-                    </label>
+                    <label className="form-field-label">Full Name</label>
                     <input
                       type="text"
+                      className="form-text-input"
                       placeholder="e.g. Jane Doe"
                       value={userData?.fullName || ""}
                       onChange={(e) => setUserData({ ...userData, fullName: e.target.value })}
-                      style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "15px", boxSizing: "border-box" }}
                     />
                   </div>
 
                   <div>
-                    <label style={{ display: "block", color: "#64748b", fontSize: "14px", marginBottom: "5px", fontWeight: "bold" }}>
-                      Username
-                    </label>
+                    <label className="form-field-label">Username</label>
                     <input
                       type="text"
+                      className="form-text-input"
                       value={userData?.username || ""}
                       onChange={(e) => setUserData({ ...userData, username: e.target.value })}
-                      style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "15px", boxSizing: "border-box" }}
                     />
                   </div>
 
                   <div>
-                    <label style={{ display: "block", color: "#64748b", fontSize: "14px", marginBottom: "5px", fontWeight: "bold" }}>
-                      Email Address
-                    </label>
+                    <label className="form-field-label">Email Address</label>
                     <input
                       type="email"
+                      className="form-text-input disabled"
                       value={userData?.email || ""}
                       disabled
-                      style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #e2e8f0", backgroundColor: "#f8fafc", color: "#94a3b8", fontSize: "15px", cursor: "not-allowed", boxSizing: "border-box" }}
                     />
-                    <p style={{ margin: "5px 0 0 0", fontSize: "12px", color: "#94a3b8" }}>
+                    <p className="form-field-help">
                       Emails cannot be changed directly for security reasons.
                     </p>
                   </div>
 
-                  <button
-                    type="submit"
-                    style={{ padding: "12px 24px", backgroundColor: "#6366f1", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold", marginTop: "10px", width: "fit-content" }}
-                  >
+                  <button type="submit" className="btn-save-settings">
                     Save Changes
                   </button>
                 </form>
               </div>
 
               {/* SECURITY / PASSWORD SECTION */}
-              <div style={{ backgroundColor: "white", padding: "30px", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
+              <div className="settings-card">
                 <h3 style={{ margin: "0 0 20px 0" }}>Security</h3>
 
                 {userData?.googleId ? (
@@ -938,7 +675,7 @@ export default function UserDashboard() {
                     <p style={{ color: "#64748b", fontSize: "14px", marginBottom: "10px" }}>
                       Your account is managed via Google. You do not need a password.
                     </p>
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "8px 12px", backgroundColor: "#f1f5f9", borderRadius: "6px", color: "#475569", fontWeight: "bold", fontSize: "14px" }}>
+                    <div className="google-auth-badge">
                       <span>🛡️</span> Google Authenticated
                     </div>
                   </div>
@@ -946,13 +683,14 @@ export default function UserDashboard() {
                   <form
                     onSubmit={async (e) => {
                       e.preventDefault();
-
                       setPasswordError("");
                       setPasswordSuccess("");
 
                       const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
                       if (!passwordRegex.test(passwordData.newPassword)) {
-                        return setPasswordError("Password must be at least 8 characters, with 1 uppercase letter and 1 number.");
+                        return setPasswordError(
+                          "Password must be at least 8 characters, with 1 uppercase letter and 1 number."
+                        );
                       }
 
                       if (passwordData.newPassword !== passwordData.confirmPassword) {
@@ -986,62 +724,51 @@ export default function UserDashboard() {
                         setPasswordError("Network error occurred. Please try again.");
                       }
                     }}
-                    style={{ display: "flex", flexDirection: "column", gap: "15px" }}
+                    className="form-group-col"
                   >
                     {passwordError && (
-                      <div style={{ padding: "10px", backgroundColor: "#fee2e2", color: "#991b1b", borderRadius: "6px", fontSize: "14px", fontWeight: "bold", border: "1px solid #ef4444" }}>
-                        ⚠️ {passwordError}
-                      </div>
+                      <div className="dash-error-banner">⚠️ {passwordError}</div>
                     )}
                     {passwordSuccess && (
-                      <div style={{ padding: "10px", backgroundColor: "#dcfce7", color: "#166534", borderRadius: "6px", fontSize: "14px", fontWeight: "bold", border: "1px solid #22c55e" }}>
+                      <div className="dash-error-banner" style={{ backgroundColor: "#dcfce7", color: "#166534", borderColor: "#22c55e" }}>
                         ✅ {passwordSuccess}
                       </div>
                     )}
 
                     <div>
-                      <label style={{ display: "block", color: "#64748b", fontSize: "14px", marginBottom: "5px", fontWeight: "bold" }}>
-                        Current Password
-                      </label>
+                      <label className="form-field-label">Current Password</label>
                       <input
                         type="password"
+                        className="form-text-input"
                         required
                         value={passwordData.currentPassword}
                         onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                        style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1", boxSizing: "border-box" }}
                       />
                     </div>
 
                     <div>
-                      <label style={{ display: "block", color: "#64748b", fontSize: "14px", marginBottom: "5px", fontWeight: "bold" }}>
-                        New Password
-                      </label>
+                      <label className="form-field-label">New Password</label>
                       <input
                         type="password"
+                        className="form-text-input"
                         required
                         value={passwordData.newPassword}
                         onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                        style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1", boxSizing: "border-box" }}
                       />
                     </div>
 
                     <div>
-                      <label style={{ display: "block", color: "#64748b", fontSize: "14px", marginBottom: "5px", fontWeight: "bold" }}>
-                        Confirm New Password
-                      </label>
+                      <label className="form-field-label">Confirm New Password</label>
                       <input
                         type="password"
+                        className="form-text-input"
                         required
                         value={passwordData.confirmPassword}
                         onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                        style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #cbd5e1", boxSizing: "border-box" }}
                       />
                     </div>
 
-                    <button
-                      type="submit"
-                      style={{ padding: "12px 24px", backgroundColor: "#0f172a", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold", marginTop: "10px", width: "fit-content" }}
-                    >
+                    <button type="submit" className="btn-update-password">
                       Update Password
                     </button>
                   </form>

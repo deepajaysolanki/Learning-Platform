@@ -9,6 +9,9 @@ import "../styles/Notebooks.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
+// 🟢 Turn off GSAP null target warnings globally
+gsap.config({ nullTargetWarn: false });
+
 const categories = [];
 
 function useDebounce(value, delay) {
@@ -219,23 +222,36 @@ export default function Notebooks() {
     });
   }, [debouncedSearchQuery, activeFilter, notebooks]);
 
-  // GSAP: Initial Page Load Animation
+  // GSAP: Initial Page Load Animation (Safely checking targets)
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: "power3.out", duration: 0.7 } });
-      tl.fromTo(".notebooks-header-area > *", { opacity: 0, y: 20 }, { opacity: 1, y: 0, stagger: 0.1 })
-        .fromTo(".search-filter-row", { opacity: 0, y: 20 }, { opacity: 1, y: 0 }, "-=0.5")
-        .fromTo(".category-pills .pill", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, stagger: 0.05 }, "-=0.5");
+
+      const headerEls = pageRef.current?.querySelectorAll(".notebooks-header-area > *");
+      if (headerEls && headerEls.length > 0) {
+        tl.fromTo(headerEls, { opacity: 0, y: 20 }, { opacity: 1, y: 0, stagger: 0.1 });
+      }
+
+      const searchRow = pageRef.current?.querySelector(".search-filter-row");
+      if (searchRow) {
+        tl.fromTo(searchRow, { opacity: 0, y: 20 }, { opacity: 1, y: 0 }, "-=0.5");
+      }
+
+      const pills = pageRef.current?.querySelectorAll(".category-pills .pill");
+      if (pills && pills.length > 0) {
+        tl.fromTo(pills, { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, stagger: 0.05 }, "-=0.5");
+      }
     }, pageRef);
     return () => ctx.revert();
   }, []);
 
-  // GSAP: Grid Items & Empty State Animations on Filter Change
+  // GSAP: Grid Items & Empty State Animations
   useEffect(() => {
     const ctx = gsap.context(() => {
-      if (gridRef.current && filteredNotebooks.length > 0) {
+      const cards = pageRef.current?.querySelectorAll(".rich-notebook-card");
+      if (gridRef.current && cards && cards.length > 0) {
         gsap.fromTo(
-          ".rich-notebook-card",
+          cards,
           { opacity: 0, y: 20 },
           {
             opacity: 1,
@@ -243,11 +259,6 @@ export default function Notebooks() {
             stagger: 0.05,
             duration: 0.5,
             ease: "power2.out",
-            scrollTrigger: {
-              trigger: ".notebooks-grid",
-              start: "top 90%",
-              toggleActions: "play none none none"
-            }
           }
         );
       } else if (emptyStateRef.current && filteredNotebooks.length === 0) {
@@ -265,17 +276,24 @@ export default function Notebooks() {
   useEffect(() => {
     if (activeChatNotebook && chatOverlayRef.current) {
       const ctx = gsap.context(() => {
-        gsap.fromTo(
-          ".chat-overlay-content > *",
-          { opacity: 0, x: -20 },
-          { opacity: 1, x: 0, stagger: 0.1, duration: 0.5, ease: "power2.out" }
-        );
-        gsap.fromTo(
-          ".chat-overlay-sidebar",
-          { opacity: 0, x: 30 },
-          { opacity: 1, x: 0, duration: 0.6, ease: "power3.out" },
-          "-=0.4"
-        );
+        const contentEls = chatOverlayRef.current?.querySelectorAll(".chat-overlay-content > *");
+        if (contentEls && contentEls.length > 0) {
+          gsap.fromTo(
+            contentEls,
+            { opacity: 0, x: -20 },
+            { opacity: 1, x: 0, stagger: 0.1, duration: 0.5, ease: "power2.out" }
+          );
+        }
+
+        const sidebar = chatOverlayRef.current?.querySelector(".chat-overlay-sidebar");
+        if (sidebar) {
+          gsap.fromTo(
+            sidebar,
+            { opacity: 0, x: 30 },
+            { opacity: 1, x: 0, duration: 0.6, ease: "power3.out" },
+            "-=0.4"
+          );
+        }
       }, chatOverlayRef);
       return () => ctx.revert();
     }

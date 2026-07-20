@@ -1,0 +1,139 @@
+/* ==========================================================================
+   1. CONTAINER & HEADER
+   ========================================================================== */
+.ap-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.ap-header {
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+}
+
+.ap-header h2 {
+  margin: 0 0 4px 0;
+  font-size: 20px;
+  color: #0f172a;
+}
+
+.ap-subtitle {
+  color: #64748b;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* ==========================================================================
+   2. PLAYER CARD & CONTROLS
+   ========================================================================== */
+.ap-player-card {
+  background-color: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+}
+
+.ap-btn-main {
+  background-color: #2563eb;
+  color: #ffffff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  width: 100%;
+  font-size: 15px;
+  transition: background-color 0.2s ease;
+}
+
+.ap-btn-main:hover {
+  background-color: #1d4ed8;
+}
+
+.ap-loading-state {
+  margin: 20px 0;
+  color: #6366f1;
+  font-weight: bold;
+}
+
+.ap-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ap-btn-stop {
+  background-color: #dc2626;
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  width: 100%;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.ap-btn-stop:hover {
+  background-color: #b91c1c;
+}
+
+.ap-btn-play {
+  background-color: #16a34a;
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  width: 100%;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.ap-btn-play:hover {
+  background-color: #15803d;
+}
+
+/* ==========================================================================
+   3. SCRIPT DISPLAY BOX
+   ========================================================================== */
+.ap-script-box {
+  margin-top: 20px;
+  text-align: left;
+  background-color: #ffffff;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  max-height: 400px;
+  overflow-y: auto;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #334155;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ap-script-box p {
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+/* ==========================================================================
+   4. MOBILE RESPONSIVENESS (< 600px)
+   ========================================================================== */
+@media (max-width: 600px) {
+  .ap-container {
+    padding: 12px;
+  }
+
+  .ap-player-card {
+    padding: 16px;
+  }
+}

@@ -7,37 +7,38 @@ export default function Footer() {
   const [status, setStatus] = useState(""); // "", "sending", "success", "error"
 
   const handleSendMessage = async (e) => {
-  e.preventDefault();
-  if (!adminMessage.trim()) return;
+    e.preventDefault();
+    if (!adminMessage.trim()) return;
 
-  setStatus("sending");
+    setStatus("sending");
 
-  try {
-    const token = localStorage.getItem("studyAppToken");
+    try {
+      const token = localStorage.getItem("studyAppToken");
 
-    const response = await fetch("https://vibestudy-backend-o61q.onrender.com/contact", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-      body: JSON.stringify({
-        message: adminMessage.trim(),
-      }),
-    });
+      const response = await fetch("https://vibestudy-backend-o61q.onrender.com/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify({
+          message: adminMessage.trim(),
+        }),
+      });
 
-    if (response.ok) {
-      setAdminMessage("");
-      setStatus("success");
-      setTimeout(() => setStatus(""), 3000);
-    } else {
+      if (response.ok) {
+        setAdminMessage("");
+        setStatus("success");
+        setTimeout(() => setStatus(""), 3000);
+      } else {
+        setStatus("error");
+      }
+    } catch (err) {
+      console.error("Failed to send message to admin:", err);
       setStatus("error");
     }
-  } catch (err) {
-    console.error("Failed to send message to admin:", err);
-    setStatus("error");
-  }
-};
+  };
+
   return (
     <footer className="main-footer">
       <div className="footer-container">
@@ -55,26 +56,24 @@ export default function Footer() {
             Empowering students worldwide with intelligent, grounded AI learning companions built around your material.
           </p>
 
-          {/* 🟢 CONNECTED: TALK TO ADMIN COMPONENT HUB 🟢 */}
-          <div className="footer-admin-chat" style={{ marginTop: "20px", maxWidth: "320px" }}>
-            <span style={{ fontSize: "12px", fontWeight: "800", color: "#6366f1", letterSpacing: "1px", display: "block", marginBottom: "8px" }}>
+          {/* Talk to Admin Widget */}
+          <div className="footer-admin-chat">
+            <span className="admin-chat-label">
               💬 HAVE QUESTIONS? TALK TO ADMIN
             </span>
-            <form onSubmit={handleSendMessage} style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <div style={{ display: "flex", gap: "8px" }}>
+            <form onSubmit={handleSendMessage} className="admin-chat-form">
+              <div className="admin-chat-input-row">
                 <input 
                   type="text" 
                   value={adminMessage}
                   onChange={(e) => setAdminMessage(e.target.value)}
                   placeholder="Ask admin anything..." 
                   className="newsletter-input"
-                  style={{ flex: 1 }}
                   disabled={status === "sending"}
                 />
                 <button 
                   type="submit" 
                   className="btn-subscribe"
-                  style={{ whiteSpace: "nowrap" }}
                   disabled={status === "sending"}
                 >
                   {status === "sending" ? "Sending..." : "Send"}
@@ -82,13 +81,13 @@ export default function Footer() {
               </div>
               
               {status === "success" && (
-                <span style={{ fontSize: "12px", color: "#22c55e", fontWeight: "600" }}>
+                <span className="status-banner success">
                   🟢 Message sent straight to the admin dashboard!
                 </span>
               )}
 
               {status === "error" && (
-                <span style={{ fontSize: "12px", color: "#ef4444", fontWeight: "600" }}>
+                <span className="status-banner error">
                   ⚠️ Failed to send message. Please try again.
                 </span>
               )}
@@ -96,7 +95,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Right Column: Restored Multi-Column Grid */}
+        {/* Right Column: Multi-Column Links */}
         <div className="footer-links-grid">
           <div className="links-group">
             <h4>Features</h4>
@@ -121,7 +120,7 @@ export default function Footer() {
           <div className="links-group">
             <h4>Platform</h4>
             <ul>
-              <li><a href="#notebooks">Public Marketplace</a></li>
+              <li><a href="">Public Marketplace</a></li>
               <li><a href="/dashboard">User Workspace</a></li>
               <li><a href="#how-it-works">Supported Uploads</a></li>
               <li><a href="#cta">Get Started Free</a></li>
@@ -137,10 +136,36 @@ export default function Footer() {
           <p className="copyright-text">
             © 2026 VibeStudy, Inc. All rights reserved.
           </p>
+
           <div className="footer-socials">
-            <a href="https://twitter.com" target="_blank" rel="noreferrer" aria-label="Twitter" className="social-icon">𝕏</a>
-            <a href="https://github.com" target="_blank" rel="noreferrer" aria-label="GitHub" className="social-icon">🐙</a>
-            <a href="https://linkedin.com" target="_blank" rel="noreferrer" aria-label="LinkedIn" className="social-icon">💼</a>
+            {/* X (Twitter) */}
+            <a 
+              href="https://twitter.com/deepSolankii_" 
+              target="_blank" 
+              rel="noreferrer" 
+              aria-label="Twitter / X" 
+              className="social-icon"
+            >
+              𝕏
+            </a>
+
+            {/* Official Clean GitHub SVG */}
+            <a 
+              href="https://github.com/deepajaysolanki" 
+              target="_blank" 
+              rel="noreferrer" 
+              aria-label="GitHub" 
+              className="social-icon"
+            >
+              <svg 
+                width="20" 
+                height="20" 
+                viewBox="0 0 24 24" 
+                fill="currentColor"
+              >
+                <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.082.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 3.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+              </svg>
+            </a>
           </div>
         </div>
       </div>

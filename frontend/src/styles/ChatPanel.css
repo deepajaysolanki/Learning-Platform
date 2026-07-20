@@ -1,0 +1,136 @@
+/* ==========================================================================
+   1. CONTAINER & HEADER
+   ========================================================================== */
+.cp-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: #ffffff;
+  box-sizing: border-box;
+}
+
+.cp-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+}
+
+.cp-header-title {
+  margin: 0;
+  font-size: 16px;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   2. CHAT STREAM & BUBBLES
+   ========================================================================== */
+.cp-chat-box {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cp-msg-wrapper {
+  display: flex;
+  width: 100%;
+}
+
+.cp-msg-wrapper.ai {
+  justify-content: flex-start;
+}
+
+.cp-msg-wrapper.user {
+  justify-content: flex-end;
+}
+
+.cp-msg-bubble {
+  padding: 12px 16px;
+  max-width: 85%;
+  font-size: 14px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.cp-msg-bubble.ai {
+  background-color: #f1f5f9;
+  color: #334155;
+  border-radius: 12px 12px 12px 4px;
+}
+
+.cp-msg-bubble.user {
+  background-color: #6366f1;
+  color: #ffffff;
+  border-radius: 12px 12px 4px 12px;
+}
+
+.cp-thinking-text {
+  font-style: italic;
+  color: #64748b;
+}
+
+/* ==========================================================================
+   3. INPUT FORM AREA
+   ========================================================================== */
+.cp-input-area {
+  display: flex;
+  padding: 16px;
+  border-top: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  gap: 10px;
+}
+
+.cp-input {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 24px;
+  border: 1px solid #cbd5e1;
+  outline: none;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.cp-input:focus {
+  border-color: #6366f1;
+}
+
+.cp-send-btn {
+  padding: 8px 16px;
+  background-color: #6366f1;
+  color: #ffffff;
+  border: none;
+  border-radius: 24px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.cp-send-btn:hover:not(:disabled) {
+  background-color: #4f46e5;
+}
+
+.cp-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   4. MOBILE RESPONSIVENESS (< 600px)
+   ========================================================================== */
+@media (max-width: 600px) {
+  .cp-chat-box {
+    padding: 14px;
+  }
+
+  .cp-msg-bubble {
+    max-width: 90%;
+  }
+
+  .cp-input-area {
+    padding: 12px;
+  }
+}

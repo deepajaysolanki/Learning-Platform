@@ -1,3 +1,6 @@
+/* ==========================================================================
+   1. PAGE WRAPPER & BACKGROUND
+   ========================================================================== */
 .registration-page-wrapper {
   background-color: #fcfdfe;
   width: 100vw;
@@ -8,8 +11,8 @@
   padding: 40px 24px;
   box-sizing: border-box;
   position: relative;
-  overflow: hidden;
-  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 .registration-ambient-glow {
@@ -19,11 +22,14 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(26, 115, 232, 0.04) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(26, 115, 232, 0.05) 0%, transparent 70%);
   pointer-events: none;
   z-index: 1;
 }
 
+/* ==========================================================================
+   2. CARD & HEADER STYLES
+   ========================================================================== */
 .registration-card {
   position: relative;
   z-index: 2;
@@ -41,7 +47,7 @@
 
 .reg-header {
   text-align: center;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 .reg-logo {
@@ -49,17 +55,12 @@
   align-items: center;
   gap: 8px;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 16px;
   color: #0f172a;
   margin-bottom: 16px;
 }
 
 .reg-logo-accent {
-  background: #1a73e8;
-  color: #ffffff;
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -70,19 +71,23 @@
   font-weight: 800;
   color: #0f172a;
   letter-spacing: -0.5px;
-  margin-bottom: 6px;
+  margin: 0 0 6px 0;
 }
 
 .reg-header p {
   font-size: 14px;
   color: #64748b;
   line-height: 1.4;
+  margin: 0;
 }
 
+/* ==========================================================================
+   3. FORM & INPUT CONTROLS
+   ========================================================================== */
 .registration-form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
   width: 100%;
 }
 
@@ -107,6 +112,8 @@
   font-size: 14px;
   outline: none;
   color: #0f172a;
+  box-sizing: border-box;
+  width: 100%;
   transition: all 0.2s ease-in-out;
 }
 
@@ -114,6 +121,42 @@
   border-color: #1a73e8;
   background-color: #ffffff;
   box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.08);
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.password-input-wrapper input {
+  padding-right: 48px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
+.password-toggle-btn:hover {
+  color: #1a73e8;
+}
+
+.field-error-text {
+  color: #e11d48;
+  font-size: 12px;
+  margin-top: 2px;
+  font-weight: 500;
 }
 
 .btn-submit-reg {
@@ -139,15 +182,17 @@
   font-weight: 600;
   color: #e11d48;
   text-align: center;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
-/* --- BASE LINE PLATFORM REDIRECTIONS CONTAINER --- */
+/* ==========================================================================
+   4. DIVIDER & GOOGLE OAUTH
+   ========================================================================== */
 .divider-row {
   display: flex;
   align-items: center;
   text-align: center;
-  margin: 24px 0 16px 0;
+  margin: 20px 0 16px 0;
   width: 100%;
 }
 
@@ -155,7 +200,7 @@
 .divider-row::after {
   content: '';
   flex: 1;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .divider-row span {
@@ -167,37 +212,17 @@
   letter-spacing: 0.5px;
 }
 
-.btn-google-reg {
-  background-color: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #334155;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 12px;
-  border-radius: 12px;
+.google-btn-wrapper {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 10px;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
   width: 100%;
-}
-
-.btn-google-reg:hover {
-  background-color: #f8fafc;
-  border-color: #94a3b8;
-}
-
-.google-icon-svg {
-  flex-shrink: 0;
 }
 
 .signin-redirect {
   font-size: 14px;
   color: #64748b;
   text-align: center;
-  margin-top: 24px;
+  margin-top: 20px;
 }
 
 .signin-redirect a {
@@ -210,16 +235,27 @@
   text-decoration: underline;
 }
 
-/* Responsive breakout thresholds */
+/* ==========================================================================
+   5. MOBILE RESPONSIVENESS (< 480px)
+   ========================================================================== */
 @media (max-width: 480px) {
   .registration-page-wrapper {
     padding: 16px;
-    background-color: #ffffff;
     align-items: flex-start;
   }
+
   .registration-card {
     border: none;
     box-shadow: none;
-    padding: 20px 8px;
+    padding: 16px 8px;
+    border-radius: 0;
+  }
+
+  .reg-header h2 {
+    font-size: 22px;
+  }
+
+  .reg-header p {
+    font-size: 13px;
   }
 }

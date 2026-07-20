@@ -1,0 +1,517 @@
+/* ==========================================================================
+   1. MAIN PAGE LAYOUT & CONTAINERS
+   ========================================================================== */
+.chatpage-wrapper {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: #f8fafc;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.chatpage-loading {
+  padding: 40px;
+  text-align: center;
+  font-family: system-ui, sans-serif;
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   2. LEFT WORKSPACE CANVAS & DOCUMENT VIEWERS
+   ========================================================================== */
+.workspace-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px 24px;
+  box-sizing: border-box;
+}
+
+.workspace-top-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+}
+
+.btn-back {
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  font-weight: bold;
+  font-size: 13px;
+  color: #334155;
+  transition: all 0.2s ease;
+}
+
+.btn-back:hover {
+  background-color: #f1f5f9;
+}
+
+.doc-tabs-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  flex: 1;
+  padding-bottom: 2px;
+}
+
+.doc-tab-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #475569;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.doc-tab-btn:hover {
+  border-color: #cbd5e1;
+}
+
+.doc-tab-btn.active {
+  border-color: #6366f1;
+  background-color: #eff6ff;
+  color: #2563eb;
+}
+
+/* Viewport Frame */
+.canvas-viewport {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e2e8f0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.empty-doc-view {
+  padding: 40px;
+  color: #334155;
+  overflow-y: auto;
+}
+
+.empty-doc-view .notice-text {
+  color: #64748b;
+  font-style: italic;
+  margin-bottom: 16px;
+}
+
+.empty-doc-view .summary-body {
+  white-space: pre-wrap;
+  line-height: 1.8;
+  font-size: 16px;
+  margin: 0;
+}
+
+/* Local DOCX & Plain Text Viewers */
+.docx-viewer-wrapper {
+  height: 100%;
+  width: 100%;
+  overflow-y: auto;
+  background-color: #646464;
+  padding: 30px 20px;
+  box-sizing: border-box;
+}
+
+.paper-text-wrapper {
+  height: 100%;
+  width: 100%;
+  overflow-y: auto;
+  background-color: #ffffff;
+  padding: 40px 60px;
+  box-sizing: border-box;
+}
+
+.paper-text-content {
+  max-width: 900px;
+  margin: 0 auto;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #0f172a;
+  line-height: 1.8;
+  font-size: 15px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Presentation Slides Deck */
+.presentation-deck {
+  height: 100%;
+  width: 100%;
+  overflow-y: auto;
+  background-color: #2e323b;
+  padding: 40px 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+}
+
+.slide-card {
+  width: 100%;
+  max-width: 850px;
+  min-height: 420px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.4);
+  padding: 40px 50px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.slide-accent-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background-color: #2563eb;
+  border-radius: 8px 8px 0 0;
+}
+
+.slide-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f1f5f9;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+}
+
+.slide-bullets {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.slide-bullets li {
+  font-size: 15px;
+  color: #334155;
+  line-height: 1.6;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+}
+
+.slide-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  margin-top: 20px;
+  border-top: 1px solid #f8fafc;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   3. RIGHT SIDE: UTILITY CONTROL PANELS
+   ========================================================================== */
+.utility-panel-sidebar {
+  width: 450px;
+  flex-shrink: 0;
+  border-left: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+.utility-tabs-header {
+  display: flex;
+  border-bottom: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+}
+
+.tab-selector-btn {
+  flex: 1;
+  padding: 16px 0;
+  border: none;
+  background-color: transparent;
+  color: #64748b;
+  border-bottom: 2px solid transparent;
+  font-weight: normal;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.tab-selector-btn.active {
+  background-color: #ffffff;
+  color: #6366f1;
+  border-bottom-color: #6366f1;
+  font-weight: bold;
+}
+
+.utility-content-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* AI Tutor Chat Stream */
+.panel-section-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+}
+
+.panel-section-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #0f172a;
+}
+
+.chat-stream-container {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chat-bubble-row {
+  display: flex;
+}
+
+.chat-bubble-row.ai {
+  justify-content: flex-start;
+}
+
+.chat-bubble-row.user {
+  justify-content: flex-end;
+}
+
+.chat-bubble {
+  padding: 16px;
+  max-width: 90%;
+  font-size: 15px;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.chat-bubble.ai {
+  background-color: #f8fafc;
+  color: #334155;
+  border-radius: 12px 12px 12px 4px;
+  border: 1px solid #e2e8f0;
+}
+
+.chat-bubble.user {
+  background-color: #6366f1;
+  color: #ffffff;
+  border-radius: 12px 12px 4px 12px;
+}
+
+.thinking-indicator {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.thinking-bubble {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 12px 16px;
+  border-radius: 12px 12px 12px 4px;
+  color: #64748b;
+  font-size: 14px;
+  font-style: italic;
+}
+
+/* Audio Lesson Panel */
+.tab-panel-scroll {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.tab-panel-scroll.centered {
+  text-align: center;
+}
+
+.panel-sub-title {
+  margin-top: 10px;
+  color: #0f172a;
+}
+
+.panel-sub-desc {
+  color: #64748b;
+  font-size: 14px;
+  margin-bottom: 30px;
+}
+
+.btn-primary-action {
+  background-color: #2563eb;
+  color: #ffffff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  width: 100%;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary-action:hover {
+  background-color: #1d4ed8;
+}
+
+.btn-danger-action {
+  background-color: #dc2626;
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.btn-success-action {
+  background-color: #16a34a;
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.btn-youtube-action {
+  background-color: #ef4444;
+  color: #ffffff;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+  font-weight: bold;
+}
+
+.script-box {
+  background-color: #f8fafc;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #334155;
+  text-align: left;
+  margin-top: 20px;
+}
+
+.script-box p {
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+/* Video Grid */
+.videos-grid {
+  display: grid;
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.video-card-embed {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+/* Global Bottom Input Bar */
+.global-input-form {
+  display: flex;
+  padding: 16px;
+  border-top: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  gap: 10px;
+}
+
+.global-text-input {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 24px;
+  border: 1px solid #cbd5e1;
+  outline: none;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.global-text-input:focus {
+  border-color: #6366f1;
+}
+
+.btn-send-input {
+  padding: 8px 16px;
+  background-color: #6366f1;
+  color: #ffffff;
+  border: none;
+  border-radius: 24px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+.btn-send-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   4. MOBILE RESPONSIVENESS (< 868px)
+   ========================================================================== */
+@media (max-width: 868px) {
+  .chatpage-wrapper {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+
+  .workspace-container {
+    width: 100%;
+    height: 500px; /* Gives viewport dedicated height on mobile */
+    padding: 12px;
+  }
+
+  .paper-text-wrapper {
+    padding: 20px;
+  }
+
+  .slide-card {
+    padding: 24px 20px;
+    min-height: 320px;
+  }
+
+  .utility-panel-sidebar {
+    width: 100%;
+    height: 600px;
+    border-left: none;
+    border-top: 1px solid #e2e8f0;
+  }
+}

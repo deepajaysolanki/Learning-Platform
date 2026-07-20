@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import '../styles/AudioPanel.css'; // 🟢 Import external CSS stylesheet
 
 const AudioPanel = ({ notebookId }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -46,38 +47,38 @@ const AudioPanel = ({ notebookId }) => {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
+    <div className="ap-container">
+      <div className="ap-header">
         <h2>🎧 Audio Overview</h2>
-        <p style={styles.subtitle}>Listen to a podcast-style summary</p>
+        <p className="ap-subtitle">Listen to a podcast-style summary</p>
       </div>
 
-      <div style={styles.playerCard}>
+      <div className="ap-player-card">
         {!script && !isLoading && (
-          <button style={styles.mainButton} onClick={generateAndPlayAudio}>
+          <button className="ap-btn-main" onClick={generateAndPlayAudio}>
             Generate Audio Summary
           </button>
         )}
 
         {isLoading && (
-          <div style={styles.loadingState}>
+          <div className="ap-loading-state">
             <div className="spinner">⏳ Generating your audio script...</div>
           </div>
         )}
 
         {script && !isLoading && (
-          <div style={styles.controls}>
+          <div className="ap-controls">
             {isPlaying ? (
-              <button style={styles.stopButton} onClick={stopAudio}>
+              <button className="ap-btn-stop" onClick={stopAudio}>
                 ⏹ Stop Playback
               </button>
             ) : (
-              <button style={styles.playButton} onClick={() => playAudio(script)}>
+              <button className="ap-btn-play" onClick={() => playAudio(script)}>
                 ▶️ Replay Audio
               </button>
             )}
             
-            <div style={styles.scriptBox}>
+            <div className="ap-script-box">
               <strong>Script:</strong>
               <p>{script}</p>
             </div>
@@ -86,18 +87,6 @@ const AudioPanel = ({ notebookId }) => {
       </div>
     </div>
   );
-};
-
-// Simple inline styles to match your clean UI
-const styles = {
-  container: { display: 'flex', flexDirection: 'column', height: '100%', padding: '20px' },
-  header: { borderBottom: '1px solid #eee', paddingBottom: '15px', marginBottom: '20px' },
-  subtitle: { color: '#666', fontSize: '14px', margin: 0 },
-  playerCard: { backgroundColor: '#f9fafb', borderRadius: '12px', padding: '20px', textAlign: 'center', border: '1px solid #e5e7eb' },
-  mainButton: { backgroundColor: '#2563eb', color: 'white', padding: '12px 24px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', width: '100%' },
-  stopButton: { backgroundColor: '#dc2626', color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold' },
-  playButton: { backgroundColor: '#16a34a', color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold' },
-  scriptBox: { marginTop: '20px', textAlign: 'left', backgroundColor: 'white', padding: '15px', borderRadius: '8px', border: '1px solid #e5e7eb', maxHeight: '400px', overflowY: 'auto', fontSize: '14px', lineHeight: '1.6' }
 };
 
 export default AudioPanel;

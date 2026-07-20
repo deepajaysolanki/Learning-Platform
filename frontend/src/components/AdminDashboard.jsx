@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import VibeStudyIcon from "./VibeStudyIcon";
+import "../styles/AdminDashboard.css"; // 🟢 Import external stylesheet
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -120,169 +121,98 @@ export default function AdminDashboard() {
     if (res.ok) fetchMessages();
   };
 
-  if (loading) return <div style={{ padding: "40px", textAlign: "center", fontFamily: "sans-serif" }}>Loading Admin Portal...</div>;
+  if (loading) return <div className="admin-loading">Loading Admin Portal...</div>;
 
   const publicPercent = stats?.totalNotebooks ? Math.round((stats.publicNotebooks / stats.totalNotebooks) * 100) : 0;
   const m = modelStats?.modelMetrics;
 
-  const tabTitleMap = {
-    overview: "Analytics Overview",
-    models: "HuggingFace AI Health",
-    users: "User Management",
-    notebooks: "Notebook Moderation",
-    messages: "User Messages",
-  };
-
   return (
-    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "sans-serif", backgroundColor: "#f8fafc", color: "#0f172a" }}>
+    <div className="admin-container">
       <Helmet>
-        <title> Admin Portal </title>
+        <title>Admin Portal</title>
         <meta name="description" content="Manage Quizolve users, notebooks, user messages, and HuggingFace AI health." />
       </Helmet>
 
       {/* SIDEBAR */}
-      <div style={{ width: "250px", backgroundColor: "#ffffff", padding: "24px", borderRight: "1px solid #e2e8f0", display: "flex", flexDirection: "column" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "40px" }}>
+      <div className="admin-sidebar">
+        <div className="admin-brand">
           <VibeStudyIcon size={36} />
-          <h2 style={{ fontSize: "18px", fontWeight: "800", color: "#0f172a", margin: 0 }}>Admin Portal</h2>
+          <h2 className="admin-brand-title">Admin Portal</h2>
         </div>
 
-        <nav style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
+        <nav className="admin-nav">
           <button
             onClick={() => setActiveTab("overview")}
-            style={{
-              padding: "12px 16px",
-              textAlign: "left",
-              borderRadius: "8px",
-              border: "none",
-              cursor: "pointer",
-              fontWeight: "bold",
-              fontSize: "14px",
-              backgroundColor: activeTab === "overview" ? "#eef2ff" : "transparent",
-              color: activeTab === "overview" ? "#6366f1" : "#64748b",
-            }}
+            className={`admin-nav-btn ${activeTab === "overview" ? "active" : ""}`}
           >
             📊 Analytics Overview
           </button>
 
           <button
             onClick={() => setActiveTab("models")}
-            style={{
-              padding: "12px 16px",
-              textAlign: "left",
-              borderRadius: "8px",
-              border: "none",
-              cursor: "pointer",
-              fontWeight: "bold",
-              fontSize: "14px",
-              backgroundColor: activeTab === "models" ? "#eef2ff" : "transparent",
-              color: activeTab === "models" ? "#6366f1" : "#64748b",
-            }}
+            className={`admin-nav-btn ${activeTab === "models" ? "active" : ""}`}
           >
             🤗 HuggingFace AI Health
           </button>
 
           <button
             onClick={() => setActiveTab("users")}
-            style={{
-              padding: "12px 16px",
-              textAlign: "left",
-              borderRadius: "8px",
-              border: "none",
-              cursor: "pointer",
-              fontWeight: "bold",
-              fontSize: "14px",
-              backgroundColor: activeTab === "users" ? "#eef2ff" : "transparent",
-              color: activeTab === "users" ? "#6366f1" : "#64748b",
-            }}
+            className={`admin-nav-btn ${activeTab === "users" ? "active" : ""}`}
           >
             👥 Manage Users
           </button>
 
           <button
             onClick={() => setActiveTab("notebooks")}
-            style={{
-              padding: "12px 16px",
-              textAlign: "left",
-              borderRadius: "8px",
-              border: "none",
-              cursor: "pointer",
-              fontWeight: "bold",
-              fontSize: "14px",
-              backgroundColor: activeTab === "notebooks" ? "#eef2ff" : "transparent",
-              color: activeTab === "notebooks" ? "#6366f1" : "#64748b",
-            }}
+            className={`admin-nav-btn ${activeTab === "notebooks" ? "active" : ""}`}
           >
             📚 Manage Notebooks
           </button>
 
           <button
             onClick={() => setActiveTab("messages")}
-            style={{
-              padding: "12px 16px",
-              textAlign: "left",
-              borderRadius: "8px",
-              border: "none",
-              cursor: "pointer",
-              fontWeight: "bold",
-              fontSize: "14px",
-              backgroundColor: activeTab === "messages" ? "#eef2ff" : "transparent",
-              color: activeTab === "messages" ? "#6366f1" : "#64748b",
-            }}
+            className={`admin-nav-btn ${activeTab === "messages" ? "active" : ""}`}
           >
             📩 User Messages
           </button>
 
-          <button
-            onClick={() => navigate("/dashboard")}
-            style={{
-              marginTop: "auto",
-              padding: "12px",
-              backgroundColor: "#f1f5f9",
-              color: "#334155",
-              border: "1px solid #cbd5e1",
-              borderRadius: "8px",
-              cursor: "pointer",
-              fontWeight: "bold",
-              fontSize: "14px",
-            }}
-          >
+          <button onClick={() => navigate("/dashboard")} className="admin-nav-btn-back">
             ← Back to App
           </button>
         </nav>
       </div>
 
       {/* MAIN CONTENT AREA */}
-      <div style={{ flex: 1, padding: "40px", overflowY: "auto" }}>
-        <div style={{ maxWidth: "1050px", margin: "0 auto" }}>
+      <div className="admin-main">
+        <div className="admin-content-wrapper">
 
-          {/* 📊 TAB 1: ANALYTICS OVERVIEW */}
+          {/* TAB 1: ANALYTICS OVERVIEW */}
           {activeTab === "overview" && (
             <div>
-              <h1 style={{ color: "#0f172a", marginBottom: "8px", fontSize: "28px", fontWeight: "800" }}>Platform Overview</h1>
-              <p style={{ color: "#64748b", marginBottom: "30px", fontSize: "15px" }}>Live platform metrics and resource statistics</p>
+              <h1 className="admin-page-title">Platform Overview</h1>
+              <p className="admin-page-subtitle">Live platform metrics and resource statistics</p>
 
               {/* METRIC CARDS */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px", marginBottom: "30px" }}>
-                <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
-                  <span style={{ color: "#64748b", fontSize: "14px", fontWeight: "600" }}>Total Registered Users</span>
-                  <h2 style={{ fontSize: "36px", margin: "12px 0 0 0", color: "#2563eb", fontWeight: "800" }}>{stats?.totalUsers || 0}</h2>
+              <div className="stats-grid-3">
+                <div className="stat-card">
+                  <span className="stat-label">Total Registered Users</span>
+                  <h2 className="stat-value blue">{stats?.totalUsers || 0}</h2>
                 </div>
-                <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
-                  <span style={{ color: "#64748b", fontSize: "14px", fontWeight: "600" }}>Total Notebooks Created</span>
-                  <h2 style={{ fontSize: "36px", margin: "12px 0 0 0", color: "#16a34a", fontWeight: "800" }}>{stats?.totalNotebooks || 0}</h2>
+                <div className="stat-card">
+                  <span className="stat-label">Total Notebooks Created</span>
+                  <h2 className="stat-value green">{stats?.totalNotebooks || 0}</h2>
                 </div>
-                <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
-                  <span style={{ color: "#64748b", fontSize: "14px", fontWeight: "600" }}>Public Notebook Ratio</span>
-                  <h2 style={{ fontSize: "36px", margin: "12px 0 0 0", color: "#6366f1", fontWeight: "800" }}>{publicPercent}%</h2>
+                <div className="stat-card">
+                  <span className="stat-label">Public Notebook Ratio</span>
+                  <h2 className="stat-value purple">{publicPercent}%</h2>
                 </div>
               </div>
 
-              {/* DIAGRAMS AND VISUAL CHARTS */}
-              <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: "24px" }}>
-                <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
-                  <h3 style={{ margin: "0 0 20px 0", fontSize: "16px", color: "#0f172a" }}>Notebook Creation Velocity</h3>
-                  <div style={{ height: "180px", width: "100%", position: "relative" }}>
+              {/* CHARTS */}
+              <div className="charts-grid-2">
+                <div className="chart-card">
+                  <h3 className="chart-card-title">Notebook Creation Velocity</h3>
+                  <div className="svg-chart-container">
                     <svg viewBox="0 0 400 150" style={{ width: "100%", height: "100%", overflow: "visible" }}>
                       <line x1="0" y1="30" x2="400" y2="30" stroke="#f1f5f9" strokeWidth="1" />
                       <line x1="0" y1="75" x2="400" y2="75" stroke="#f1f5f9" strokeWidth="1" />
@@ -299,7 +229,7 @@ export default function AdminDashboard() {
                       </defs>
                     </svg>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", color: "#94a3b8", fontSize: "12px", marginTop: "10px" }}>
+                  <div className="chart-labels-row">
                     <span>Week 1</span>
                     <span>Week 2</span>
                     <span>Week 3</span>
@@ -307,62 +237,58 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.02)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                  <h3 style={{ margin: "0 0 20px 0", fontSize: "16px", color: "#0f172a", alignSelf: "flex-start" }}>Public vs Private Notebooks</h3>
-                  <div style={{ position: "relative", width: "120px", height: "120px" }}>
+                <div className="chart-card centered">
+                  <h3 className="chart-card-title left-align">Public vs Private Notebooks</h3>
+                  <div className="donut-chart-wrapper">
                     <svg viewBox="0 0 36 36" style={{ width: "100%", height: "100%", transform: "rotate(-90deg)" }}>
                       <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" strokeWidth="3.8" />
                       <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22c55e" strokeWidth="3.8" strokeDasharray={`${publicPercent}, 100`} />
                     </svg>
-                    <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", fontWeight: "800", fontSize: "18px", color: "#0f172a" }}>
-                      {publicPercent}%
-                    </div>
+                    <div className="donut-chart-text">{publicPercent}%</div>
                   </div>
-                  <div style={{ display: "flex", gap: "16px", marginTop: "20px", fontSize: "13px" }}>
-                    <span style={{ color: "#22c55e", fontWeight: "600" }}>🟢 Public ({stats?.publicNotebooks || 0})</span>
-                    <span style={{ color: "#64748b", fontWeight: "600" }}>🔒 Private ({(stats?.totalNotebooks || 0) - (stats?.publicNotebooks || 0)})</span>
+                  <div className="donut-legend-row">
+                    <span className="legend-item green">🟢 Public ({stats?.publicNotebooks || 0})</span>
+                    <span className="legend-item slate">🔒 Private ({(stats?.totalNotebooks || 0) - (stats?.publicNotebooks || 0)})</span>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* 🤗 TAB 2: HUGGINGFACE AI MODEL HEALTH & DIAGRAMS */}
+          {/* TAB 2: HUGGINGFACE AI MODEL HEALTH */}
           {activeTab === "models" && (
             <div>
-              <h1 style={{ color: "#0f172a", marginBottom: "8px", fontSize: "28px", fontWeight: "800" }}>HuggingFace Model & Pipeline Health</h1>
-              <p style={{ color: "#64748b", marginBottom: "30px", fontSize: "15px" }}>Real-time accuracy, latency, and HF Inference API metrics</p>
+              <h1 className="admin-page-title">HuggingFace Model & Pipeline Health</h1>
+              <p className="admin-page-subtitle">Real-time accuracy, latency, and HF Inference API metrics</p>
 
               {/* HF METRICS ROW */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "24px" }}>
-                <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "16px", border: "1px solid #e2e8f0" }}>
-                  <span style={{ color: "#64748b", fontSize: "13px", fontWeight: "600" }}>Accuracy Score</span>
-                  <h2 style={{ fontSize: "28px", margin: "8px 0 0 0", color: "#16a34a" }}>{m?.accuracyScore || 98.6}%</h2>
-                  <span style={{ fontSize: "12px", color: "#22c55e", fontWeight: "600" }}>⚡ HuggingFace Active</span>
+              <div className="stats-grid-4">
+                <div className="stat-card compact">
+                  <span className="stat-label">Accuracy Score</span>
+                  <h2 className="stat-value green">{m?.accuracyScore || 98.6}%</h2>
+                  <span className="stat-subtag green">⚡ HuggingFace Active</span>
                 </div>
-                <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "16px", border: "1px solid #e2e8f0" }}>
-                  <span style={{ color: "#64748b", fontSize: "13px", fontWeight: "600" }}>Inference Latency</span>
-                  <h2 style={{ fontSize: "28px", margin: "8px 0 0 0", color: "#2563eb" }}>{m?.avgLatencyMs || 380} ms</h2>
-                  <span style={{ fontSize: "12px", color: "#2563eb", fontWeight: "600" }}>🚀 Low Latency</span>
+                <div className="stat-card compact">
+                  <span className="stat-label">Inference Latency</span>
+                  <h2 className="stat-value blue">{m?.avgLatencyMs || 380} ms</h2>
+                  <span className="stat-subtag blue">🚀 Low Latency</span>
                 </div>
-                <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "16px", border: "1px solid #e2e8f0" }}>
-                  <span style={{ color: "#64748b", fontSize: "13px", fontWeight: "600" }}>Token Efficiency</span>
-                  <h2 style={{ fontSize: "28px", margin: "8px 0 0 0", color: "#6366f1" }}>{m?.tokenEfficiency || 99.4}%</h2>
-                  <span style={{ fontSize: "12px", color: "#6366f1", fontWeight: "600" }}>🎯 HF Pipeline Optimized</span>
+                <div className="stat-card compact">
+                  <span className="stat-label">Token Efficiency</span>
+                  <h2 className="stat-value purple">{m?.tokenEfficiency || 99.4}%</h2>
+                  <span className="stat-subtag purple">🎯 HF Pipeline Optimized</span>
                 </div>
-                <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "16px", border: "1px solid #e2e8f0" }}>
-                  <span style={{ color: "#64748b", fontSize: "13px", fontWeight: "600" }}>Cache Hit Rate</span>
-                  <h2 style={{ fontSize: "28px", margin: "8px 0 0 0", color: "#eab308" }}>{m?.cacheHitRate || 86.5}%</h2>
-                  <span style={{ fontSize: "12px", color: "#ca8a04", fontWeight: "600" }}>💾 High Summary Reuse</span>
+                <div className="stat-card compact">
+                  <span className="stat-label">Cache Hit Rate</span>
+                  <h2 className="stat-value yellow">{m?.cacheHitRate || 86.5}%</h2>
+                  <span className="stat-subtag yellow">💾 High Summary Reuse</span>
                 </div>
               </div>
 
               {/* PIPELINE WORKFLOW DIAGRAM */}
-              <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.02)", marginBottom: "24px" }}>
-                <h3 style={{ margin: "0 0 20px 0", fontSize: "16px", color: "#0f172a", fontWeight: "700" }}>
-                  🤗 HuggingFace Inference Execution Pipeline
-                </h3>
-                <div style={{ width: "100%", overflowX: "auto" }}>
+              <div className="pipeline-card">
+                <h3 className="chart-card-title">🤗 HuggingFace Inference Execution Pipeline</h3>
+                <div className="pipeline-svg-wrapper">
                   <svg viewBox="0 0 800 160" style={{ width: "100%", minWidth: "600px", height: "auto" }}>
                     <rect x="20" y="50" width="130" height="60" rx="10" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="2" />
                     <text x="85" y="80" fill="#334155" fontSize="13" fontWeight="bold" textAnchor="middle">User Request</text>
@@ -390,60 +316,58 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* CHARTS */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
-                <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "16px", border: "1px solid #e2e8f0" }}>
-                  <h3 style={{ margin: "0 0 20px 0", fontSize: "16px", color: "#0f172a" }}>HuggingFace Latency by Endpoint</h3>
-                  
-                  <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              {/* WORKLOAD DISTRIBUTION CHARTS */}
+              <div className="charts-grid-equal">
+                <div className="chart-card">
+                  <h3 className="chart-card-title">HuggingFace Latency by Endpoint</h3>
+                  <div className="progress-list">
                     <div>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "6px" }}>
-                        <span style={{ fontWeight: "600" }}>HF Text Summarizer</span>
-                        <span style={{ color: "#64748b" }}>290 ms</span>
+                      <div className="progress-header">
+                        <span className="progress-label">HF Text Summarizer</span>
+                        <span className="progress-val">290 ms</span>
                       </div>
-                      <div style={{ width: "100%", backgroundColor: "#f1f5f9", height: "10px", borderRadius: "10px", overflow: "hidden" }}>
-                        <div style={{ width: "60%", backgroundColor: "#2563eb", height: "10px", borderRadius: "10px" }}></div>
+                      <div className="progress-track">
+                        <div className="progress-fill blue" style={{ width: "60%" }}></div>
                       </div>
                     </div>
 
                     <div>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "6px" }}>
-                        <span style={{ fontWeight: "600" }}>HF Instruct (Quiz Generator)</span>
-                        <span style={{ color: "#64748b" }}>520 ms</span>
+                      <div className="progress-header">
+                        <span className="progress-label">HF Instruct (Quiz Generator)</span>
+                        <span className="progress-val">520 ms</span>
                       </div>
-                      <div style={{ width: "100%", backgroundColor: "#f1f5f9", height: "10px", borderRadius: "10px", overflow: "hidden" }}>
-                        <div style={{ width: "80%", backgroundColor: "#16a34a", height: "10px", borderRadius: "10px" }}></div>
+                      <div className="progress-track">
+                        <div className="progress-fill green" style={{ width: "80%" }}></div>
                       </div>
                     </div>
 
                     <div>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "6px" }}>
-                        <span style={{ fontWeight: "600" }}>HF Chat Context Assistant</span>
-                        <span style={{ color: "#64748b" }}>210 ms</span>
+                      <div className="progress-header">
+                        <span className="progress-label">HF Chat Context Assistant</span>
+                        <span className="progress-val">210 ms</span>
                       </div>
-                      <div style={{ width: "100%", backgroundColor: "#f1f5f9", height: "10px", borderRadius: "10px", overflow: "hidden" }}>
-                        <div style={{ width: "40%", backgroundColor: "#6366f1", height: "10px", borderRadius: "10px" }}></div>
+                      <div className="progress-track">
+                        <div className="progress-fill purple" style={{ width: "40%" }}></div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "16px", border: "1px solid #e2e8f0" }}>
-                  <h3 style={{ margin: "0 0 20px 0", fontSize: "16px", color: "#0f172a" }}>HF Inference Workload Distribution</h3>
-                  
-                  <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div className="chart-card">
+                  <h3 className="chart-card-title">HF Inference Workload Distribution</h3>
+                  <div className="progress-list">
                     {(modelStats?.modelDistribution || [
                       { name: "HuggingFace Text-Gen (Summaries)", percentage: 60, color: "#2563eb" },
                       { name: "HuggingFace Instruct (Quiz Gen)", percentage: 30, color: "#16a34a" },
                       { name: "HuggingFace Embeddings / Chat", percentage: 10, color: "#6366f1" }
                     ]).map((item, idx) => (
                       <div key={idx}>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "6px" }}>
-                          <span style={{ fontWeight: "600", color: "#334155" }}>{item.name}</span>
-                          <span style={{ fontWeight: "bold", color: item.color }}>{item.percentage}%</span>
+                        <div className="progress-header">
+                          <span className="progress-label">{item.name}</span>
+                          <span className="progress-val" style={{ color: item.color }}>{item.percentage}%</span>
                         </div>
-                        <div style={{ width: "100%", backgroundColor: "#f1f5f9", height: "8px", borderRadius: "10px", overflow: "hidden" }}>
-                          <div style={{ width: `${item.percentage}%`, backgroundColor: item.color, height: "8px", borderRadius: "10px" }}></div>
+                        <div className="progress-track thin">
+                          <div className="progress-fill" style={{ width: `${item.percentage}%`, backgroundColor: item.color }}></div>
                         </div>
                       </div>
                     ))}
@@ -453,21 +377,21 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* 👥 TAB 3: USER MANAGEMENT */}
+          {/* TAB 3: USER MANAGEMENT */}
           {activeTab === "users" && (
             <div>
-              <h1 style={{ color: "#0f172a", marginBottom: "8px", fontSize: "28px", fontWeight: "800" }}>User Management</h1>
-              <p style={{ color: "#64748b", marginBottom: "30px", fontSize: "15px" }}>Registered accounts and creation metadata</p>
+              <h1 className="admin-page-title">User Management</h1>
+              <p className="admin-page-subtitle">Registered accounts and creation metadata</p>
 
-              <div style={{ backgroundColor: "white", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.02)", overflow: "hidden" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "14px" }}>
+              <div className="table-card">
+                <table className="admin-table">
                   <thead>
-                    <tr style={{ backgroundColor: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#64748b" }}>
-                      <th style={{ padding: "16px 20px" }}>Username</th>
-                      <th style={{ padding: "16px 20px" }}>Email</th>
-                      <th style={{ padding: "16px 20px" }}>Joined Date</th>
-                      <th style={{ padding: "16px 20px" }}>Role</th>
-                      <th style={{ padding: "16px 20px", textAlign: "right" }}>Actions</th>
+                    <tr>
+                      <th>Username</th>
+                      <th>Email</th>
+                      <th>Joined Date</th>
+                      <th>Role</th>
+                      <th style={{ textAlign: "right" }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -475,18 +399,18 @@ export default function AdminDashboard() {
                       const createdDate = u.createdAt ? new Date(u.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "N/A";
 
                       return (
-                        <tr key={u._id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                          <td style={{ padding: "16px 20px", fontWeight: "700", color: "#0f172a" }}>@{u.username}</td>
-                          <td style={{ padding: "16px 20px", color: "#475569" }}>{u.email}</td>
-                          <td style={{ padding: "16px 20px", color: "#64748b" }}>📅 {createdDate}</td>
-                          <td style={{ padding: "16px 20px" }}>
-                            <span style={{ padding: "4px 10px", borderRadius: "20px", backgroundColor: u.role === "admin" ? "#e0f2fe" : "#f1f5f9", color: u.role === "admin" ? "#0284c7" : "#475569", fontSize: "12px", fontWeight: "700" }}>
+                        <tr key={u._id}>
+                          <td className="user-cell">@{u.username}</td>
+                          <td className="email-cell">{u.email}</td>
+                          <td className="date-cell">📅 {createdDate}</td>
+                          <td>
+                            <span className={`role-badge ${u.role === "admin" ? "admin" : "user"}`}>
                               {u.role || "user"}
                             </span>
                           </td>
-                          <td style={{ padding: "16px 20px", textAlign: "right" }}>
+                          <td style={{ textAlign: "right" }}>
                             {u.role !== "admin" && (
-                              <button onClick={() => handleDeleteUser(u._id)} style={{ padding: "8px 14px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", color: "#dc2626", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}>
+                              <button onClick={() => handleDeleteUser(u._id)} className="btn-delete-danger">
                                 Delete User
                               </button>
                             )}
@@ -500,88 +424,66 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* 📚 TAB 4: NOTEBOOK MODERATION */}
+          {/* TAB 4: NOTEBOOK MODERATION */}
           {activeTab === "notebooks" && (
             <div>
-              <h1 style={{ color: "#0f172a", marginBottom: "8px", fontSize: "28px", fontWeight: "800" }}>Notebook Moderation</h1>
-              <p style={{ color: "#64748b", marginBottom: "30px", fontSize: "15px" }}>Review, test, or purge community study materials</p>
+              <h1 className="admin-page-title">Notebook Moderation</h1>
+              <p className="admin-page-subtitle">Review, test, or purge community study materials</p>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(450px, 1fr))", gap: "24px" }}>
+              <div className="notebooks-grid">
                 {notebooks.map((notebook) => {
                   const isPublic = notebook.isPublic || notebook.visibility === "public";
                   const notebookId = notebook._id || notebook.id;
                   const likeCount = Array.isArray(notebook.likes) ? notebook.likes.length : (notebook.likes || 0);
 
                   return (
-                    <div
-                      key={notebookId}
-                      style={{
-                        backgroundColor: "white",
-                        padding: "24px",
-                        borderRadius: "16px",
-                        border: "1px solid #e2e8f0",
-                        display: "flex",
-                        flexDirection: "column",
-                        boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
-                        <div style={{ width: "48px", height: "48px", borderRadius: "12px", backgroundColor: "#eff6ff", display: "flex", justifyContent: "center", alignItems: "center", flexShrink: 0 }}>
+                    <div key={notebookId} className="notebook-mod-card">
+                      <div className="mod-card-header">
+                        <div className="mod-icon-box">
                           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                             <path d="M4 19V5C4 3.89543 4.89543 3 6 3H19C19.5523 3 20 3.44772 20 4V20C20 20.5523 19.5523 21 19 21H6C4.89543 21 4 20.1046 4 19ZM4 19C4 20.1046 4.89543 21 6 21H19" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                             <path d="M9 3V21" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         </div>
                         <div>
-                          <h3 style={{ margin: "0 0 8px 0", color: "#0f172a", fontSize: "20px", fontWeight: "800", lineHeight: "1.2" }}>
-                            {notebook.title || "Untitled Notebook"}
-                          </h3>
-                          <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#64748b", fontSize: "14px", fontWeight: "500" }}>
+                          <h3 className="mod-card-title">{notebook.title || "Untitled Notebook"}</h3>
+                          <div className="mod-visibility">
                             {isPublic ? <span style={{ color: "#22c55e", fontSize: "10px" }}>🟢 Public</span> : <span style={{ fontSize: "12px" }}>🔒 Private</span>}
                           </div>
                         </div>
                       </div>
 
-                      <div style={{ backgroundColor: "#f8fafc", borderRadius: "12px", padding: "16px", marginTop: "20px", flex: 1 }}>
-                        <span style={{ color: "#2563eb", fontWeight: "bold", fontSize: "14px", display: "block", marginBottom: "6px" }}>Summary</span>
-                        <p style={{ margin: 0, color: "#475569", fontSize: "14px", lineHeight: "1.5" }}>
+                      <div className="mod-summary-box">
+                        <span className="mod-summary-title">Summary</span>
+                        <p className="mod-summary-text">
                           {notebook.aiSummary || notebook.summary || notebook.description || "No summary provided."}
                         </p>
                       </div>
 
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "20px" }}>
-                        <button
-                          onClick={() => navigate(`/notebook/${notebookId}/study`)}
-                          style={{ padding: "10px", backgroundColor: "#2563eb", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
-                        >
+                      <div className="mod-actions-grid">
+                        <button onClick={() => navigate(`/notebook/${notebookId}/study`)} className="btn-mod-action blue">
                           💬 Study / Chat
                         </button>
-                        <button
-                          onClick={() => navigate(`/notebook/${notebookId}/quiz`)}
-                          style={{ padding: "10px", backgroundColor: "white", border: "1px solid #e2e8f0", borderRadius: "8px", color: "#334155", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
-                        >
+                        <button onClick={() => navigate(`/notebook/${notebookId}/quiz`)} className="btn-mod-action outline">
                           🎮 Play Quiz
                         </button>
                       </div>
 
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "16px", paddingTop: "16px", borderTop: "1px solid #f1f5f9" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#ff4757", fontSize: "13px", fontWeight: "bold" }}>
+                      <div className="mod-card-footer">
+                        <div className="mod-footer-meta">
+                          <div className="mod-like-count">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="#ff4757" stroke="#ff4757" strokeWidth="2">
                               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                             </svg>
                             <span>{likeCount}</span>
                           </div>
 
-                          <span style={{ fontSize: "13px", color: "#64748b", fontWeight: "600" }}>
+                          <span className="mod-author">
                             By @{notebook.author?.username || "unknown"}
                           </span>
                         </div>
 
-                        <button
-                          onClick={() => handleDeleteNotebook(notebookId)}
-                          style={{ padding: "8px 14px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", color: "#ef4444", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
-                        >
+                        <button onClick={() => handleDeleteNotebook(notebookId)} className="btn-delete-danger">
                           Delete
                         </button>
                       </div>
@@ -592,33 +494,30 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* 📩 TAB 5: USER MESSAGES FROM FOOTER */}
+          {/* TAB 5: USER MESSAGES */}
           {activeTab === "messages" && (
             <div>
-              <h1 style={{ color: "#0f172a", marginBottom: "8px", fontSize: "28px", fontWeight: "800" }}>User Messages</h1>
-              <p style={{ color: "#64748b", marginBottom: "30px", fontSize: "15px" }}>Direct inquiries submitted through the website footer</p>
+              <h1 className="admin-page-title">User Messages</h1>
+              <p className="admin-page-subtitle">Direct inquiries submitted through the website footer</p>
 
               {messages.length === 0 ? (
-                <div style={{ padding: "40px", backgroundColor: "white", borderRadius: "12px", border: "1px dashed #cbd5e1", textAlign: "center", color: "#64748b" }}>
+                <div className="empty-msg-card">
                   No messages received yet.
                 </div>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div className="messages-list">
                   {messages.map((msg) => (
-                    <div key={msg._id} style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                        <h3 style={{ margin: 0, color: "#0f172a", fontSize: "16px" }}>{msg.subject || "Footer Quick Message"}</h3>
-                        <span style={{ fontSize: "12px", color: "#64748b" }}>{new Date(msg.createdAt).toLocaleDateString()}</span>
+                    <div key={msg._id} className="message-card">
+                      <div className="msg-header">
+                        <h3 className="msg-subject">{msg.subject || "Footer Quick Message"}</h3>
+                        <span className="msg-date">{new Date(msg.createdAt).toLocaleDateString()}</span>
                       </div>
-                      <p style={{ color: "#475569", fontSize: "14px", margin: "0 0 16px 0", lineHeight: "1.5" }}>{msg.message}</p>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ fontSize: "13px", color: "#2563eb", fontWeight: "bold" }}>
+                      <p className="msg-body">{msg.message}</p>
+                      <div className="msg-footer">
+                        <span className="msg-author-info">
                           From: {msg.name || "Anonymous User"} ({msg.email || "No Email Provided"})
                         </span>
-                        <button
-                          onClick={() => handleDeleteMessage(msg._id)}
-                          style={{ backgroundColor: "#fef2f2", color: "#ef4444", border: "1px solid #fecaca", padding: "6px 12px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "12px" }}
-                        >
+                        <button onClick={() => handleDeleteMessage(msg._id)} className="btn-delete-danger">
                           Delete Message
                         </button>
                       </div>
