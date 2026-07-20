@@ -1,25 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import '../styles/Footer.css';
 import VibeStudyIcon from './VibeStudyIcon';
 
 export default function Footer() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [adminMessage, setAdminMessage] = useState("");
-  const [status, setStatus] = useState(""); // "", "sending", "success", "error"
+  const [status, setStatus] = useState(""); // "", "sending", "success", "error", "auth_required"
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Check login state on component mount
+  useEffect(() => {
+    const token = localStorage.getItem("studyAppToken");
+    setIsLoggedIn(!!token);
+  }, []);
+
+  // Helper to scroll to section if on home, or navigate to home then scroll
+  const handleScrollToSection = (sectionId) => {
+    if (location.pathname === "/") {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    } else {
+      navigate("/", { state: { scrollTo: sectionId } });
+    }
+  };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
+
+    const token = localStorage.getItem("studyAppToken");
+
+    // 🟢 AUTH GUARD: Restrict sending messages if user is not logged in
+    if (!token) {
+      setStatus("auth_required");
+      setTimeout(() => {
+        navigate("/login?msg=login_required");
+      }, 1500);
+      return;
+    }
+
     if (!adminMessage.trim()) return;
 
     setStatus("sending");
 
     try {
-      const token = localStorage.getItem("studyAppToken");
-
       const response = await fetch("https://vibestudy-backend-o61q.onrender.com/contact", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           message: adminMessage.trim(),
@@ -67,7 +100,7 @@ export default function Footer() {
                   type="text" 
                   value={adminMessage}
                   onChange={(e) => setAdminMessage(e.target.value)}
-                  placeholder="Ask admin anything..." 
+                  placeholder={isLoggedIn ? "Ask admin anything..." : "Log in to message admin..."} 
                   className="newsletter-input"
                   disabled={status === "sending"}
                 />
@@ -80,6 +113,12 @@ export default function Footer() {
                 </button>
               </div>
               
+              {status === "auth_required" && (
+                <span className="status-banner error">
+                  🔒 Please log in to send a message to admin. Redirecting...
+                </span>
+              )}
+
               {status === "success" && (
                 <span className="status-banner success">
                   🟢 Message sent straight to the admin dashboard!
@@ -95,42 +134,78 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Right Column: Multi-Column Links */}
+        {/* Right Column: Navigation Links */}
         <div className="footer-links-grid">
           <div className="links-group">
             <h4>Features</h4>
             <ul>
-              <li><a href="#how-it-works">Contextual Chat</a></li>
-              <li><a href="#how-it-works">Audio Overviews</a></li>
-              <li><a href="#how-it-works">Video Insights</a></li>
-              <li><a href="#how-it-works">Interactive Quizzes</a></li>
+              <li>
+                <button type="button" onClick={() => handleScrollToSection("how-it-works")} className="footer-link-btn">
+                  Contextual Chat
+                </button>
+              </li>
+              <li>
+                <button type="button" onClick={() => handleScrollToSection("how-it-works")} className="footer-link-btn">
+                  Audio Overviews
+                </button>
+              </li>
+              <li>
+                <button type="button" onClick={() => handleScrollToSection("how-it-works")} className="footer-link-btn">
+                  Video Insights
+                </button>
+              </li>
+              <li>
+                <button type="button" onClick={() => handleScrollToSection("how-it-works")} className="footer-link-btn">
+                  Interactive Quizzes
+                </button>
+              </li>
             </ul>
           </div>
 
           <div className="links-group">
             <h4>Workflows</h4>
             <ul>
-              <li><a href="#workflows">Deep-Dive Study</a></li>
-              <li><a href="#workflows">Active Commute</a></li>
-              <li><a href="#workflows">Visual Context</a></li>
-              <li><a href="#workflows">Exam Readiness</a></li>
+              <li>
+                <button type="button" onClick={() => handleScrollToSection("workflows")} className="footer-link-btn">
+                  Deep-Dive Study
+                </button>
+              </li>
+              <li>
+                <button type="button" onClick={() => handleScrollToSection("workflows")} className="footer-link-btn">
+                  Active Commute
+                </button>
+              </li>
+              <li>
+                <button type="button" onClick={() => handleScrollToSection("workflows")} className="footer-link-btn">
+                  Visual Context
+                </button>
+              </li>
+              <li>
+                <button type="button" onClick={() => handleScrollToSection("workflows")} className="footer-link-btn">
+                  Exam Readiness
+                </button>
+              </li>
             </ul>
           </div>
 
           <div className="links-group">
             <h4>Platform</h4>
             <ul>
-              <li><a href="">Public Marketplace</a></li>
-              <li><a href="/dashboard">User Workspace</a></li>
-              <li><a href="#how-it-works">Supported Uploads</a></li>
-              <li><a href="#cta">Get Started Free</a></li>
+              <li><Link to="/notebooks">Public Marketplace</Link></li>
+              <li><Link to="/dashboard">User Workspace</Link></li>
+              <li>
+                <button type="button" onClick={() => handleScrollToSection("how-it-works")} className="footer-link-btn">
+                  Supported Uploads
+                </button>
+              </li>
+              <li><Link to="/register">Get Started Free</Link></li>
             </ul>
           </div>
         </div>
 
       </div>
 
-      {/* Bottom Bar: Copyright and Social Icons */}
+      {/* Bottom Bar */}
       <div className="footer-bottom-bar">
         <div className="footer-bottom-container">
           <p className="copyright-text">
@@ -138,9 +213,8 @@ export default function Footer() {
           </p>
 
           <div className="footer-socials">
-            {/* X (Twitter) */}
             <a 
-              href="https://twitter.com/deepSolankii_" 
+              href="https://x.com" 
               target="_blank" 
               rel="noreferrer" 
               aria-label="Twitter / X" 
@@ -149,9 +223,8 @@ export default function Footer() {
               𝕏
             </a>
 
-            {/* Official Clean GitHub SVG */}
             <a 
-              href="https://github.com/deepajaysolanki" 
+              href="https://github.com" 
               target="_blank" 
               rel="noreferrer" 
               aria-label="GitHub" 

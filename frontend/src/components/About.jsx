@@ -263,7 +263,7 @@ export default function About() {
                     </svg>
                   </a>
                   <a
-                    href="https://x.com/deepSolankii_"
+                    href="https://x.com/deepSolankki"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="social-footer-btn twitter"
