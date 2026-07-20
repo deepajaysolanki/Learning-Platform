@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Helmet } from "react-helmet-async";
-import "../styles/Home.css"
+import "../styles/home.css"
 import "../styles/index.css";
 
 gsap.registerPlugin(ScrollTrigger);
