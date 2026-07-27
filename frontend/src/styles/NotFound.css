@@ -1,0 +1,109 @@
+.not-found-wrapper {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background-color: #f8fafc;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.not-found-card {
+  max-width: 500px;
+  width: 100%;
+  background-color: #ffffff;
+  border-radius: 24px;
+  border: 1px solid #e2e8f0;
+  padding: 48px 32px;
+  text-align: center;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05);
+}
+
+.not-found-icon-box {
+  width: 80px;
+  height: 80px;
+  background-color: #eff6ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px auto;
+  border: 1px solid #dbeafe;
+}
+
+.not-found-badge {
+  color: #ef4444;
+  background-color: #fef2f2;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  display: inline-block;
+  margin-bottom: 12px;
+}
+
+.not-found-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 12px 0;
+}
+
+.not-found-text {
+  font-size: 15px;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0 0 28px 0;
+}
+
+.not-found-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btn-nf-primary {
+  padding: 12px 24px;
+  background-color: #2563eb;
+  color: #ffffff;
+  border-radius: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-nf-primary:hover {
+  background-color: #1d4ed8;
+}
+
+.btn-nf-secondary {
+  padding: 12px 24px;
+  background-color: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-nf-secondary:hover {
+  background-color: #f8fafc;
+}
+
+@media (max-width: 600px) {
+  .not-found-card {
+    padding: 32px 20px;
+  }
+  .not-found-actions {
+    flex-direction: column;
+  }
+  .btn-nf-primary,
+  .btn-nf-secondary {
+    width: 100%;
+    text-align: center;
+  }
+}

@@ -18,6 +18,7 @@ import ProtectedRoute from "./ProtectedRoute.jsx";
 import UserDashboard from "./UserDashboard.jsx";
 import AdminDashboard from "./AdminDashboard.jsx";
 import ScrollToTop from "./ScrollToTop.jsx";
+import NotFound from "./NotFound.jsx";
 
 function MainApp() {
   return (
@@ -40,6 +41,7 @@ function MainApp() {
           }
         />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
     </>
