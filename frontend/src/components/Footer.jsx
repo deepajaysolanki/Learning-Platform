@@ -48,7 +48,7 @@ export default function Footer() {
     setStatus("sending");
 
     try {
-      const response = await fetch("https://vibestudy-backend-o61q.onrender.com/contact", {
+      const response = await fetch("https://vibestudybackend.vercel.app/contact", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

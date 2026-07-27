@@ -45,7 +45,7 @@ const Login = () => {
   const handleStandardSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("https://vibestudy-backend-o61q.onrender.com/login", {
+      const response = await fetch("https://vibestudybackend.vercel.app/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // ✅ 2. Payload matches the unified state exactly
@@ -73,7 +73,7 @@ const Login = () => {
   // Google Login Success Handler
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const response = await fetch("https://vibestudy-backend-o61q.onrender.com/google", {
+      const response = await fetch("https://vibestudybackend.vercel.app/google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ credential: credentialResponse.credential }),
@@ -97,7 +97,7 @@ const Login = () => {
   const handleCompleteGoogleSignUp = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("https://vibestudy-backend-o61q.onrender.com/google/complete", {
+      const response = await fetch("https://vibestudybackend.vercel.app/google/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: googleEmail, username: newUsername }),

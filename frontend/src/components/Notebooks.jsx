@@ -49,7 +49,7 @@ const NotebookCard = ({ nb, onInteract, onChatClick, onQuizClick }) => {
     setIsLiked(!isLiked);
 
     try {
-      const response = await fetch(`https://vibestudy-backend-o61q.onrender.com/like/${nb.id}`, {
+      const response = await fetch(`https://vibestudybackend.vercel.app/like/${nb.id}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -81,7 +81,7 @@ const NotebookCard = ({ nb, onInteract, onChatClick, onQuizClick }) => {
     setIsSaved(!isSaved);
 
     try {
-      const response = await fetch(`https://vibestudy-backend-o61q.onrender.com/save-notebook/${nb.id}`, {
+      const response = await fetch(`https://vibestudybackend.vercel.app/save-notebook/${nb.id}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -185,7 +185,7 @@ export default function Notebooks() {
     const fetchNotebooks = async () => {
       try {
         const token = localStorage.getItem("studyAppToken");
-        const response = await fetch("https://vibestudy-backend-o61q.onrender.com/createnotebook", {
+        const response = await fetch("https://vibestudybackend.vercel.app/createnotebook", {
           method: "GET",
           headers: {
             Authorization: token ? `Bearer ${token}` : "",

@@ -182,7 +182,7 @@ export default function ChatPage() {
   useEffect(() => {
     const fetchFullNotebook = async () => {
       try {
-        const response = await fetch(`https://vibestudy-backend-o61q.onrender.com/notebook/${id}`);
+        const response = await fetch(`https://vibestudybackend.vercel.app/notebook/${id}`);
         const data = await response.json();
 
         if (response.ok) {
@@ -235,7 +235,7 @@ export default function ChatPage() {
       const notebookId = notebook._id || notebook.id || id;
 
       const response = await fetch(
-        `https://vibestudy-backend-o61q.onrender.com/notebook/${notebookId}/chat`,
+        `https://vibestudybackend.vercel.app/notebook/${notebookId}/chat`,
         {
           method: "POST",
           headers: {
@@ -273,7 +273,7 @@ export default function ChatPage() {
     try {
       const notebookId = notebook._id || notebook.id || id;
 
-      const response = await fetch("https://vibestudy-backend-o61q.onrender.com/generate-script", {
+      const response = await fetch("https://vibestudybackend.vercel.app/generate-script", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notebookId, customPrompt: userText }),
@@ -299,7 +299,7 @@ export default function ChatPage() {
     try {
       const queryText = userText ? userText : notebook.title;
 
-      const response = await fetch("https://vibestudy-backend-o61q.onrender.com/get-videos", {
+      const response = await fetch("https://vibestudybackend.vercel.app/get-videos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: queryText }),

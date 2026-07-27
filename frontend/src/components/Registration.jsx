@@ -104,7 +104,7 @@ const Register = () => {
 
     try {
       const response = await fetch(
-        "https://vibestudy-backend-o61q.onrender.com/register",
+        "https://vibestudybackend.vercel.app/register",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -129,7 +129,7 @@ const Register = () => {
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const response = await fetch(
-        "https://vibestudy-backend-o61q.onrender.com/google",
+        "https://vibestudybackend.vercel.app/google",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -154,7 +154,7 @@ const Register = () => {
     e.preventDefault();
     try {
       const response = await fetch(
-        "https://vibestudy-backend-o61q.onrender.com/google/complete",
+        "https://vibestudybackend.vercel.app/google/complete",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
