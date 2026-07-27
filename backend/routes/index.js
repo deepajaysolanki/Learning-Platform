@@ -50,7 +50,7 @@ if (mongoose.connection.readyState === 1) {
 
 // -------------------------------------
 router.get('/', function (req, res, next) {
-  res.send('Welcome to the VibeStudy backend!');
+  res.send('VibeStudy Backend is running on Vercel!');
 });
 
 // route for registration
