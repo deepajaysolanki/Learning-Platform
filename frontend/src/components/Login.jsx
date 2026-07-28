@@ -8,9 +8,11 @@ import VibeStudyIcon from "./VibeStudyIcon";
 const Login = () => {
   const pageScopeRef = useRef(null);
 
-  // ✅ 1. Unified State: We only need one variable for the username/email input
+  // Form State
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
 
   // Google OAuth State
@@ -44,11 +46,13 @@ const Login = () => {
   // Standard Email/Password Login
   const handleStandardSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setMessage("");
+
     try {
       const response = await fetch("https://vibestudy-backend-avmi.onrender.com/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // ✅ 2. Payload matches the unified state exactly
         body: JSON.stringify({ emailOrUsername, password }),
       });
 
@@ -66,12 +70,15 @@ const Login = () => {
         setMessage(data.message || "Login failed.");
       }
     } catch (error) {
-      setMessage(`Login Failed`);
+      setMessage("Login Failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Google Login Success Handler
   const handleGoogleSuccess = async (credentialResponse) => {
+    setIsLoading(true);
     try {
       const response = await fetch("https://vibestudy-backend-avmi.onrender.com/google", {
         method: "POST",
@@ -90,12 +97,15 @@ const Login = () => {
     } catch (error) {
       console.log("THE REAL ERROR IS:", error);
       setMessage("Google login failed.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Submit the New Username
   const handleCompleteGoogleSignUp = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       const response = await fetch("https://vibestudy-backend-avmi.onrender.com/google/complete", {
         method: "POST",
@@ -112,6 +122,8 @@ const Login = () => {
       }
     } catch (error) {
       setMessage("Error completing setup.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -142,7 +154,6 @@ const Login = () => {
               <form className="login-form" onSubmit={handleStandardSubmit}>
                 <div className="form-group">
                   <label htmlFor="emailOrUsername">Email or username</label>
-                  {/* ✅ 3. Input is fully bound to the unified state */}
                   <input
                     type="text"
                     id="emailOrUsername"
@@ -154,20 +165,54 @@ const Login = () => {
                   />
                 </div>
 
-                <div className="form-group">
+                <div className="form-group password-field-group" style={{ position: "relative" }}>
+                  <label htmlFor="password">Password</label>
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     id="password"
                     name="password"
                     placeholder="Enter your password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    style={{ paddingRight: "40px" }}
                   />
+                  <button
+                    type="button"
+                    className="toggle-password-btn"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    style={{
+                      position: "absolute",
+                      right: "12px",
+                      top: "38px",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: 0,
+                      color: "#888",
+                      display: "flex",
+                      alignItems: "center"
+                    }}
+                    aria-label="Toggle password visibility"
+                  >
+                    {showPassword ? (
+                      // Eye Off Icon
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                      </svg>
+                    ) : (
+                      // Eye Icon
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    )}
+                  </button>
                 </div>
 
-                <button type="submit" className="btn-submit-login">
-                  Sign in
+                <button type="submit" className="btn-submit-login" disabled={isLoading}>
+                  {isLoading ? "Signing in..." : "Sign in"}
                 </button>
 
                 {message && <p className="status-msg">{message}</p>}
@@ -211,8 +256,8 @@ const Login = () => {
                 />
               </div>
 
-              <button type="submit" className="btn-submit-login">
-                Complete Setup
+              <button type="submit" className="btn-submit-login" disabled={isLoading}>
+                {isLoading ? "Completing setup..." : "Complete Setup"}
               </button>
 
               {message && (

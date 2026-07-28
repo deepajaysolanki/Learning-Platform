@@ -46,15 +46,12 @@ const CreateNotebookModal = ({ isOpen, onClose, onNotebookCreated }) => {
     setIsUploading(true);
     setError("");
 
-    // 🚨 IMPORTANT: When sending files, we MUST use FormData, not JSON!
     const formData = new FormData();
     formData.append("title", title);
     formData.append("isPublic", isPublic);
     
-    // Retrieve the JWT token from localStorage (or wherever you store it)
     const token = localStorage.getItem("studyAppToken");
 
-    // Append every file the user selected
     files.forEach((file) => {
       formData.append("documents", file);
     });
@@ -62,8 +59,6 @@ const CreateNotebookModal = ({ isOpen, onClose, onNotebookCreated }) => {
     try {
       const response = await fetch("https://vibestudy-backend-avmi.onrender.com/createnotebook", {
         method: "POST",
-        // Do NOT set 'Content-Type': 'application/json' here. 
-        // The browser automatically sets the correct multipart boundary for FormData!
         headers: {
           "Authorization": `Bearer ${token}`
         },
@@ -73,7 +68,6 @@ const CreateNotebookModal = ({ isOpen, onClose, onNotebookCreated }) => {
       const data = await response.json();
 
       if (response.ok) {
-        // Tell the parent page to update the list, then close the modal
         onNotebookCreated(data.notebook);
         onClose();
       } else {
@@ -126,15 +120,42 @@ const CreateNotebookModal = ({ isOpen, onClose, onNotebookCreated }) => {
             )}
           </div>
 
-          <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
+          {/* 🟢 FIXED CHECKBOX LAYOUT CONTAINER */}
+          <div 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'flex-start',
+              gap: '10px', 
+              marginTop: '12px',
+              marginBottom: '10px',
+              cursor: 'pointer' 
+            }}
+          >
             <input
               type="checkbox"
               id="is-public"
               checked={isPublic}
               onChange={(e) => setIsPublic(e.target.checked)}
               disabled={isUploading}
+              style={{ 
+                width: '18px', 
+                height: '18px', 
+                cursor: 'pointer',
+                margin: 0 
+              }}
             />
-            <label htmlFor="is-public" style={{ margin: 0, fontWeight: 'normal' }}>
+            <label 
+              htmlFor="is-public" 
+              style={{ 
+                margin: 0, 
+                fontWeight: 'normal', 
+                fontSize: '14px', 
+                color: '#4a5568',
+                cursor: 'pointer',
+                userSelect: 'none'
+              }}
+            >
               Make this notebook Public (Community can view)
             </label>
           </div>
@@ -165,7 +186,7 @@ const CreateNotebookModal = ({ isOpen, onClose, onNotebookCreated }) => {
   );
 };
 
-// Simple inline style for the dark backdrop
+// Backdrop style
 const overlayStyle = {
   position: 'fixed',
   top: 0,
