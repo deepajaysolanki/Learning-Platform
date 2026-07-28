@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import "../styles/UserDashboard.css"; // 🟢 Import external CSS
+import "../styles/UserDashboard.css";
+
+// Helper function to get the auth token
+const getToken = () => localStorage.getItem("studyAppToken");
 
 // 🟢 REUSABLE INTERACTIVE LIKE BUTTON
 const DashLikeButton = ({ notebookId, initialLikes, initialIsLiked }) => {
@@ -15,7 +18,7 @@ const DashLikeButton = ({ notebookId, initialLikes, initialIsLiked }) => {
 
   const handleToggleLike = async (e) => {
     e.stopPropagation();
-    const token = localStorage.getItem("studyAppToken");
+    const token = getToken();
     if (!token) return;
 
     // Optimistic Update
@@ -101,7 +104,11 @@ export default function UserDashboard() {
   // --- FETCH PROFILE ---
   useEffect(() => {
     const fetchProfile = async () => {
-      const token = localStorage.getItem("studyAppToken");
+      const token = getToken();
+      if (!token) {
+        handleLogout();
+        return;
+      }
       try {
         const response = await fetch("https://vibestudybackend.vercel.app/profile", {
           method: "GET",
@@ -136,7 +143,7 @@ export default function UserDashboard() {
 
   const fetchSavedNotebooks = async () => {
     try {
-      const token = localStorage.getItem("studyAppToken");
+      const token = getToken();
       const response = await fetch("https://vibestudybackend.vercel.app/saved-notebooks", {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -159,7 +166,7 @@ export default function UserDashboard() {
   const fetchMyNotebooks = async () => {
     setLoadingNotebooks(true);
     setNotebookError("");
-    const token = localStorage.getItem("studyAppToken");
+    const token = getToken();
 
     try {
       const res = await fetch("https://vibestudybackend.vercel.app/my-notebooks", {
@@ -191,7 +198,7 @@ export default function UserDashboard() {
   const handleDeleteNotebook = async (notebookId) => {
     if (!window.confirm("Are you sure you want to delete this notebook? This cannot be undone.")) return;
 
-    const token = localStorage.getItem("studyAppToken");
+    const token = getToken();
     try {
       const res = await fetch(`https://vibestudybackend.vercel.app/notebook/${notebookId}`, {
         method: "DELETE",
@@ -213,7 +220,7 @@ export default function UserDashboard() {
 
   // --- REMOVE FROM SAVED NOTEBOOKS ---
   const handleRemoveSavedNotebook = async (notebookId) => {
-    const token = localStorage.getItem("studyAppToken");
+    const token = getToken();
     if (!token) return;
 
     setSavedNotebooks((prev) => prev.filter((nb) => (nb.id || nb._id) !== notebookId));
@@ -272,8 +279,8 @@ export default function UserDashboard() {
   return (
     <div className="dashboard-container">
       <Helmet>
-        <title>{pageTitle} | Quizolve</title>
-        <meta name="description" content="Manage your Quizolve account and notebooks." />
+        <title>{pageTitle} | VibeStudy</title>
+        <meta name="description" content="Manage your account and notebooks." />
       </Helmet>
 
       {/* SIDEBAR */}
@@ -600,7 +607,7 @@ export default function UserDashboard() {
                 <form
                   onSubmit={async (e) => {
                     e.preventDefault();
-                    const token = localStorage.getItem("studyAppToken");
+                    const token = getToken();
                     try {
                       const res = await fetch("https://vibestudybackend.vercel.app/profile", {
                         method: "PUT",
@@ -697,7 +704,7 @@ export default function UserDashboard() {
                         return setPasswordError("New passwords do not match!");
                       }
 
-                      const token = localStorage.getItem("studyAppToken");
+                      const token = getToken();
 
                       try {
                         const res = await fetch("https://vibestudybackend.vercel.app/profile/password", {
