@@ -18,4 +18,4 @@
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: 0 }]
   }, { timestamps: true }); // Automatically handles 'createdAt' and 'updatedAt'
 
-  module.exports = mongoose.models.Notebook || mongoose.model('Notebook', notebookSchema);
+  module.exports = mongoose.model('Notebook', notebookSchema);

@@ -9,4 +9,4 @@ const messageSchema = new mongoose.Schema({
   status: { type: String, enum: ['unread', 'read'], default: 'unread' },
 }, { timestamps: true });
 
-module.exports = mongoose.models.Message || mongoose.model('Message', messageSchema);
+module.exports = mongoose.model('Message', messageSchema);
