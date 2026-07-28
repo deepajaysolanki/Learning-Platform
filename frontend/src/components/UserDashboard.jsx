@@ -279,7 +279,7 @@ export default function UserDashboard() {
   return (
     <div className="dashboard-container">
       <Helmet>
-        <title>{pageTitle} | VibeStudy</title>
+        <title>{pageTitle} | Quizolve</title>
         <meta name="description" content="Manage your account and notebooks." />
       </Helmet>
 
@@ -400,8 +400,8 @@ export default function UserDashboard() {
                     const notebookId = notebook._id || notebook.id;
 
                     return (
-                      <div key={notebookId || index} className="notebook-card">
-                        <div className="card-header">
+                      <div key={notebookId || index} className="dash-notebook-card">
+                        <div className="dash-card-header">
                           <div className="card-icon-box blue">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                               <path
@@ -438,7 +438,7 @@ export default function UserDashboard() {
                           </div>
                         </div>
 
-                        <div className="card-summary-box">
+                        <div className="dash-card-summary-box">
                           <div className="summary-header">
                             <div className="summary-dot"></div>
                             <span className="summary-label">Summary</span>
@@ -448,7 +448,7 @@ export default function UserDashboard() {
                           </p>
                         </div>
 
-                        <div className="card-actions-grid">
+                        <div className="dash-card-actions-grid">
                           <button
                             onClick={() => navigate(`/notebook/${notebookId}/study`)}
                             className="btn-card-action"
@@ -463,7 +463,7 @@ export default function UserDashboard() {
                           </button>
                         </div>
 
-                        <div className="card-footer">
+                        <div className="dash-card-footer">
                           <div className="footer-left-actions">
                             <DashLikeButton
                               notebookId={notebookId}
@@ -524,8 +524,8 @@ export default function UserDashboard() {
                     const notebookId = notebook.id || notebook._id;
 
                     return (
-                      <div key={notebookId || index} className="notebook-card">
-                        <div className="card-header">
+                      <div key={notebookId || index} className="dash-notebook-card">
+                        <div className="dash-card-header">
                           <div className="card-icon-box green">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
@@ -537,8 +537,8 @@ export default function UserDashboard() {
                           </div>
                         </div>
 
-                        <div className="card-summary-box">
-                          <span className="summary-label" style={{ display: "block", marginBottom: "8px" }}>
+                        <div className="dash-card-summary-box">
+                          <span className="summary-label" style={{ display: "block", marginbottom: "8px" }}>
                             Summary
                           </span>
                           <p className="summary-text">
@@ -546,7 +546,7 @@ export default function UserDashboard() {
                           </p>
                         </div>
 
-                        <div className="card-actions-grid three-col">
+                        <div className="dash-card-actions-grid three-col">
                           <button
                             onClick={() => navigate(`/notebook/${notebookId}/study`)}
                             className="btn-card-action primary"
@@ -568,7 +568,7 @@ export default function UserDashboard() {
                           </button>
                         </div>
 
-                        <div className="card-footer">
+                        <div className="dash-card-footer">
                           <DashLikeButton
                             notebookId={notebookId}
                             initialLikes={notebook.likes}
