@@ -26,7 +26,7 @@ const DashLikeButton = ({ notebookId, initialLikes, initialIsLiked }) => {
     setIsLiked(!isLiked);
 
     try {
-      const response = await fetch(`https://vibestudybackend.vercel.app/like/${notebookId}`, {
+      const response = await fetch(`https://vibestudy-backend-avmi.onrender.com/like/${notebookId}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -110,7 +110,7 @@ export default function UserDashboard() {
         return;
       }
       try {
-        const response = await fetch("https://vibestudybackend.vercel.app/profile", {
+        const response = await fetch("https://vibestudy-backend-avmi.onrender.com/profile", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -144,7 +144,7 @@ export default function UserDashboard() {
   const fetchSavedNotebooks = async () => {
     try {
       const token = getToken();
-      const response = await fetch("https://vibestudybackend.vercel.app/saved-notebooks", {
+      const response = await fetch("https://vibestudy-backend-avmi.onrender.com/saved-notebooks", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -169,7 +169,7 @@ export default function UserDashboard() {
     const token = getToken();
 
     try {
-      const res = await fetch("https://vibestudybackend.vercel.app/my-notebooks", {
+      const res = await fetch("https://vibestudy-backend-avmi.onrender.com/my-notebooks", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -200,7 +200,7 @@ export default function UserDashboard() {
 
     const token = getToken();
     try {
-      const res = await fetch(`https://vibestudybackend.vercel.app/notebook/${notebookId}`, {
+      const res = await fetch(`https://vibestudy-backend-avmi.onrender.com/notebook/${notebookId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -226,7 +226,7 @@ export default function UserDashboard() {
     setSavedNotebooks((prev) => prev.filter((nb) => (nb.id || nb._id) !== notebookId));
 
     try {
-      const response = await fetch(`https://vibestudybackend.vercel.app/save-notebook/${notebookId}`, {
+      const response = await fetch(`https://vibestudy-backend-avmi.onrender.com/save-notebook/${notebookId}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -609,7 +609,7 @@ export default function UserDashboard() {
                     e.preventDefault();
                     const token = getToken();
                     try {
-                      const res = await fetch("https://vibestudybackend.vercel.app/profile", {
+                      const res = await fetch("https://vibestudy-backend-avmi.onrender.com/profile", {
                         method: "PUT",
                         headers: {
                           Authorization: `Bearer ${token}`,
@@ -707,7 +707,7 @@ export default function UserDashboard() {
                       const token = getToken();
 
                       try {
-                        const res = await fetch("https://vibestudybackend.vercel.app/profile/password", {
+                        const res = await fetch("https://vibestudy-backend-avmi.onrender.com/profile/password", {
                           method: "PUT",
                           headers: {
                             Authorization: `Bearer ${token}`,

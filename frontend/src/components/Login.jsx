@@ -45,7 +45,7 @@ const Login = () => {
   const handleStandardSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("https://vibestudybackend.vercel.app/login", {
+      const response = await fetch("https://vibestudy-backend-avmi.onrender.com/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // ✅ 2. Payload matches the unified state exactly
@@ -66,14 +66,14 @@ const Login = () => {
         setMessage(data.message || "Login failed.");
       }
     } catch (error) {
-      setMessage(`${error}`);
+      setMessage(`Login Failed`);
     }
   };
 
   // Google Login Success Handler
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const response = await fetch("https://vibestudybackend.vercel.app/google", {
+      const response = await fetch("https://vibestudy-backend-avmi.onrender.com/google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ credential: credentialResponse.credential }),
@@ -97,7 +97,7 @@ const Login = () => {
   const handleCompleteGoogleSignUp = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("https://vibestudybackend.vercel.app/google/complete", {
+      const response = await fetch("https://vibestudy-backend-avmi.onrender.com/google/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: googleEmail, username: newUsername }),

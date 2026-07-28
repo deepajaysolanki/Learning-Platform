@@ -2,20 +2,6 @@
   const router = express.Router();
   const mongoose = require('mongoose');
 
-  // require('dotenv').config({ path: '../.env'});
-  mongoose.connect(process.env.MONGO_URI, {
-  serverSelectionTimeoutMS: 5000
-})
-.then(() => {
-  console.log("🚀 MongoDB Connected successfully!");  
-  app.listen(process.env.PORT || 3000, () => {
-    console.log(`Server running on port ${process.env.PORT || 3000}`);
-  });
-})
-.catch(err => {
-  console.error("❌ Critical MongoDB connection failure:", err);
-});
-
   const notebookSchema = new mongoose.Schema({
     title: { type: String, required: true, trim: true },
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -32,5 +18,4 @@
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: 0 }]
   }, { timestamps: true }); // Automatically handles 'createdAt' and 'updatedAt'
 
-  const Notebook = mongoose.model('Notebook', notebookSchema);
-  module.exports = Notebook;
+  module.exports = mongoose.models.Notebook || mongoose.model('Notebook', notebookSchema);

@@ -47,7 +47,7 @@ export default function QuizPage() {
 
     try {
       const response = await fetch(
-        `https://vibestudybackend.vercel.app/notebook/${id}/quiz`,
+        `https://vibestudy-backend-avmi.onrender.com/notebook/${id}/quiz`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

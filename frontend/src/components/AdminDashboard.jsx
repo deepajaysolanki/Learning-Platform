@@ -22,7 +22,7 @@ export default function AdminDashboard() {
 
   const fetchAdminOverview = async () => {
     try {
-      const res = await fetch("https://vibestudybackend.vercel.app/admin/stats", {
+      const res = await fetch("https://vibestudy-backend-avmi.onrender.com/admin/stats", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.status === 403 || res.status === 401) {
@@ -41,7 +41,7 @@ export default function AdminDashboard() {
 
   const fetchModelStats = async () => {
     try {
-      const res = await fetch("https://vibestudybackend.vercel.app/admin/model-stats", {
+      const res = await fetch("https://vibestudy-backend-avmi.onrender.com/admin/model-stats", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -53,7 +53,7 @@ export default function AdminDashboard() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch("https://vibestudybackend.vercel.app/admin/users", {
+      const res = await fetch("https://vibestudy-backend-avmi.onrender.com/admin/users", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -65,7 +65,7 @@ export default function AdminDashboard() {
 
   const fetchNotebooks = async () => {
     try {
-      const res = await fetch("https://vibestudybackend.vercel.app/admin/notebooks", {
+      const res = await fetch("https://vibestudy-backend-avmi.onrender.com/admin/notebooks", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -77,7 +77,7 @@ export default function AdminDashboard() {
 
   const fetchMessages = async () => {
     try {
-      const res = await fetch("https://vibestudybackend.vercel.app/admin/messages", {
+      const res = await fetch("https://vibestudy-backend-avmi.onrender.com/admin/messages", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -96,7 +96,7 @@ export default function AdminDashboard() {
 
   const handleDeleteUser = async (id) => {
     if (!window.confirm("Are you sure? This will delete the user and all their notebooks.")) return;
-    const res = await fetch(`https://vibestudybackend.vercel.app/admin/user/${id}`, {
+    const res = await fetch(`https://vibestudy-backend-avmi.onrender.com/admin/user/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -105,7 +105,7 @@ export default function AdminDashboard() {
 
   const handleDeleteNotebook = async (id) => {
     if (!window.confirm("Remove this notebook from database?")) return;
-    const res = await fetch(`https://vibestudybackend.vercel.app/admin/notebook/${id}`, {
+    const res = await fetch(`https://vibestudy-backend-avmi.onrender.com/admin/notebook/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -114,7 +114,7 @@ export default function AdminDashboard() {
 
   const handleDeleteMessage = async (id) => {
     if (!window.confirm("Delete this message?")) return;
-    const res = await fetch(`https://vibestudybackend.vercel.app/admin/message/${id}`, {
+    const res = await fetch(`https://vibestudy-backend-avmi.onrender.com/admin/message/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });

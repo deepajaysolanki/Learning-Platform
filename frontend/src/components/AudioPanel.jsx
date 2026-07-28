@@ -9,7 +9,7 @@ const AudioPanel = ({ notebookId }) => {
   const generateAndPlayAudio = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('https://vibestudybackend.vercel.app/generate-script', {
+      const response = await fetch('https://vibestudy-backend-avmi.onrender.com/generate-script', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notebookId }),

@@ -60,7 +60,7 @@ const CreateNotebookModal = ({ isOpen, onClose, onNotebookCreated }) => {
     });
 
     try {
-      const response = await fetch("https://vibestudybackend.vercel.app/createnotebook", {
+      const response = await fetch("https://vibestudy-backend-avmi.onrender.com/createnotebook", {
         method: "POST",
         // Do NOT set 'Content-Type': 'application/json' here. 
         // The browser automatically sets the correct multipart boundary for FormData!

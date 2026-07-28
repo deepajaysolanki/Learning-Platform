@@ -37,7 +37,7 @@ export default function ChatPanel({ notebook }) {
     try {
       const token = localStorage.getItem("studyAppToken");
       const response = await fetch(
-        `https://vibestudybackend.vercel.app/notebook/${notebook.id}/chat`,
+        `https://vibestudy-backend-avmi.onrender.com/notebook/${notebook.id}/chat`,
         {
           method: "POST",
           headers: {

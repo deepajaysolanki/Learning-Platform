@@ -35,7 +35,7 @@ export default function Home() {
     let isMounted = true;
     const fetchPublicNotebooks = async () => {
       try {
-        const res = await fetch("https://vibestudybackend.vercel.app/public-notebooks");
+        const res = await fetch("https://vibestudy-backend-avmi.onrender.com/public-notebooks");
         const data = await res.json();
         if (res.ok && isMounted) {
           const notebooksArray = Array.isArray(data) ? data : data.notebooks || [];

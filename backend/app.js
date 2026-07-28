@@ -9,7 +9,20 @@ var usersRouter = require('./routes/users');
 var adminRouter = require('./routes/admin');
 
 const cors = require('cors');
+const connectDB = require("./db");
+
 var app = express();
+
+// Middleware to ensure DB is connected before ANY request runs
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error("MongoDB Middleware Error:", err);
+    res.status(500).json({ error: "Failed to connect to database" });
+  }
+});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

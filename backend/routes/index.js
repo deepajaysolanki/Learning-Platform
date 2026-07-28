@@ -50,7 +50,7 @@ if (mongoose.connection.readyState === 1) {
 
 // -------------------------------------
 router.get('/', function (req, res, next) {
-  res.send('VibeStudy Backend is running on Vercel!');
+  res.send('VibeStudy Backend is running on Render!');
 });
 
 // route for registration
@@ -106,7 +106,7 @@ router.post('/login', async function (req, res) {
 
     res.status(200).json({ message: 'Login successful', token: token, user: user });
   } catch (err) {
-    return res.status(500).json({ message: `Error logging in: ${err.message}` });
+    return res.status(500).json({ message: `Error logging in` });
   }
 });
 
