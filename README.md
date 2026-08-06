@@ -65,4 +65,4 @@ Make sure you have the following installed:
 
 ### Author
   Deep Solanki — Founder & Lead Full-Stack Developer
-  - portfolio: deepsolanki.onrender.com
+  - portfolio: https://deepsolanki.onrender.com
